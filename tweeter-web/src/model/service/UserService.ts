@@ -1,5 +1,7 @@
 import { User, AuthToken, FakeData } from "tweeter-shared";
 import { Buffer } from "buffer";
+const CURRENT_USER_KEY: string = "CurrentUserKey";
+const AUTH_TOKEN_KEY: string = "AuthTokenKey";
 
 export class UserService {
   public async login(
@@ -101,4 +103,33 @@ export class UserService {
 
     return [followerCount, followeeCount];
   }
+  public async logout(authToken: AuthToken): Promise<void> {
+    await new Promise((res) => setTimeout(res, 1000));
+  }
+  public saveToLocalStorage(currentUser: User, authToken: AuthToken): void {
+    localStorage.setItem(CURRENT_USER_KEY, currentUser.toJson());
+    localStorage.setItem(AUTH_TOKEN_KEY, authToken.toJson());
+  }
+  public retrieveFromLocalStorage = (): {
+    currentUser: User | null;
+    displayedUser: User | null;
+    authToken: AuthToken | null;
+  } => {
+    const loggedInUser = User.fromJson(localStorage.getItem(CURRENT_USER_KEY));
+    const authToken = AuthToken.fromJson(localStorage.getItem(AUTH_TOKEN_KEY));
+
+    if (!!loggedInUser && !!authToken) {
+      return {
+        currentUser: loggedInUser,
+        displayedUser: loggedInUser,
+        authToken: authToken,
+      };
+    } else {
+      return { currentUser: null, displayedUser: null, authToken: null };
+    }
+  };
+  public clearLocalStorage = (): void => {
+    localStorage.removeItem(CURRENT_USER_KEY);
+    localStorage.removeItem(AUTH_TOKEN_KEY);
+  };
 }

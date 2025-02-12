@@ -11,11 +11,19 @@ import {
   PostStatusPresenter,
   PostStatusView,
 } from "../../presenters/PostStatusPresenter";
+import {
+  LogoutUserView,
+  LogoutUserPresenter,
+} from "../../presenters/LogoutUserPresenter";
 
 const MainLayout = () => {
   return (
     <>
-      <AppNavbar />
+      <AppNavbar
+        presenterGenerator={(view: LogoutUserView) =>
+          new LogoutUserPresenter(view)
+        }
+      />
       <div className="container mx-auto px-3 w-100">
         <div className="row gx-4">
           <div className="col-4">
