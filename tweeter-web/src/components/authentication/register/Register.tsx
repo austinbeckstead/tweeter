@@ -8,8 +8,12 @@ import { Buffer } from "buffer";
 import useToastListener from "../../toaster/ToastListenerHook";
 import AuthenticationFields from "../AuthenticationFields";
 import useUserInfo from "../../userInfo/UserInfoHook";
-
-const Register = () => {
+import { UserView } from "../../../presenters/UserPresenter";
+import { RegisterPresenter } from "../../../presenters/RegisterPresenter";
+interface Props {
+  presenterGenerator: (view: UserView) => RegisterPresenter;
+}
+const Register = (props: Props) => {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [alias, setAlias] = useState("");
@@ -17,8 +21,6 @@ const Register = () => {
   const [imageBytes, setImageBytes] = useState<Uint8Array>(new Uint8Array());
   const [imageUrl, setImageUrl] = useState<string>("");
   const [imageFileExtension, setImageFileExtension] = useState<string>("");
-  const [rememberMe, setRememberMe] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
 
   const navigate = useNavigate();
   const { updateUserInfo } = useUserInfo();
@@ -82,50 +84,22 @@ const Register = () => {
     return file.name.split(".").pop();
   };
 
-  const doRegister = async () => {
-    try {
-      setIsLoading(true);
-
-      const [user, authToken] = await register(
-        firstName,
-        lastName,
-        alias,
-        password,
-        imageBytes,
-        imageFileExtension
-      );
-
-      updateUserInfo(user, user, authToken, rememberMe);
-      navigate("/");
-    } catch (error) {
-      displayErrorMessage(
-        `Failed to register user because of exception: ${error}`
-      );
-    } finally {
-      setIsLoading(false);
-    }
+  const listener: UserView = {
+    updateUserInfo: updateUserInfo,
+    navigate: navigate,
+    displayErrorMessage: displayErrorMessage,
   };
+  const [presenter] = useState(props.presenterGenerator(listener));
 
-  const register = async (
-    firstName: string,
-    lastName: string,
-    alias: string,
-    password: string,
-    userImageBytes: Uint8Array,
-    imageFileExtension: string
-  ): Promise<[User, AuthToken]> => {
-    // Not neded now, but will be needed when you make the request to the server in milestone 3
-    const imageStringBase64: string =
-      Buffer.from(userImageBytes).toString("base64");
-
-    // TODO: Replace with the result of calling the server
-    const user = FakeData.instance.firstUser;
-
-    if (user === null) {
-      throw new Error("Invalid registration");
-    }
-
-    return [user, FakeData.instance.authToken];
+  const doRegister = () => {
+    presenter.doRegister(
+      firstName,
+      lastName,
+      alias,
+      password,
+      imageBytes,
+      imageFileExtension
+    );
   };
 
   const inputFieldGenerator = () => {
@@ -190,9 +164,9 @@ const Register = () => {
       oAuthHeading="Register with:"
       inputFieldGenerator={inputFieldGenerator}
       switchAuthenticationMethodGenerator={switchAuthenticationMethodGenerator}
-      setRememberMe={setRememberMe}
+      setRememberMe={presenter.setRememberMe}
       submitButtonDisabled={checkSubmitButtonStatus}
-      isLoading={isLoading}
+      isLoading={presenter.isLoading}
       submit={doRegister}
     />
   );
