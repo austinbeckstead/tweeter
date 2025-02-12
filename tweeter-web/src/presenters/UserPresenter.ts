@@ -9,6 +9,7 @@ export interface UserView {
   ) => void;
   navigate: (originalUrl: string) => void;
   displayErrorMessage: (message: string) => void;
+  setDisplayedUser?: (user: User) => void;
 }
 export abstract class UserPresenter {
   private _view: UserView;

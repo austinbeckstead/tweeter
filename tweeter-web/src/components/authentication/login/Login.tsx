@@ -6,10 +6,10 @@ import AuthenticationFormLayout from "../AuthenticationFormLayout";
 import useToastListener from "../../toaster/ToastListenerHook";
 import AuthenticationFields from "../AuthenticationFields";
 import useUserInfo from "../../userInfo/UserInfoHook";
-import { LoginPresenter } from "../../../presenters/LoginPresenter";
+import { LoginUserPresenter } from "../../../presenters/LoginUserPresenter";
 import { UserView } from "../../../presenters/UserPresenter";
 interface Props {
-  presenterGenerator: (view: UserView) => LoginPresenter;
+  presenterGenerator: (view: UserView) => LoginUserPresenter;
 }
 const Login = (props: Props) => {
   const [alias, setAlias] = useState("");

@@ -20,8 +20,8 @@ import { FollowerPresenter } from "./presenters/FollowerPresenter";
 import { StatusItemView } from "./presenters/StatusItemPresenter";
 import { StoryItemPresenter } from "./presenters/StoryItemPresenter";
 import { FeedItemPresenter } from "./presenters/FeedItemPresenter";
-import { RegisterPresenter } from "./presenters/RegisterPresenter";
-import { LoginPresenter } from "./presenters/LoginPresenter";
+import { RegisterUserPresenter } from "./presenters/RegisterUserPresenter";
+import { LoginUserPresenter } from "./presenters/LoginUserPresenter";
 import { UserView } from "./presenters/UserPresenter";
 
 const App = () => {
@@ -110,7 +110,9 @@ const UnauthenticatedRoutes = () => {
         path="/login"
         element={
           <Login
-            presenterGenerator={(view: UserView) => new LoginPresenter(view)}
+            presenterGenerator={(view: UserView) =>
+              new LoginUserPresenter(view)
+            }
           />
         }
       />
@@ -118,7 +120,9 @@ const UnauthenticatedRoutes = () => {
         path="/register"
         element={
           <Register
-            presenterGenerator={(view: UserView) => new RegisterPresenter(view)}
+            presenterGenerator={(view: UserView) =>
+              new RegisterUserPresenter(view)
+            }
           />
         }
       />
@@ -127,7 +131,7 @@ const UnauthenticatedRoutes = () => {
         element={
           <Login
             presenterGenerator={(view: UserView) =>
-              new LoginPresenter(view, location.pathname)
+              new LoginUserPresenter(view, location.pathname)
             }
           />
         }

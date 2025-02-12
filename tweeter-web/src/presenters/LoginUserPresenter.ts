@@ -1,7 +1,7 @@
 import { UserService } from "../model/service/UserService";
 import { UserPresenter, UserView } from "./UserPresenter";
 
-export class LoginPresenter extends UserPresenter {
+export class LoginUserPresenter extends UserPresenter {
   private userService: UserService;
   public constructor(view: UserView, originalUrl?: string) {
     super(view, originalUrl);

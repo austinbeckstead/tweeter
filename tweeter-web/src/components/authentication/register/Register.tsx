@@ -3,15 +3,14 @@ import "bootstrap/dist/css/bootstrap.css";
 import { ChangeEvent, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import AuthenticationFormLayout from "../AuthenticationFormLayout";
-import { AuthToken, FakeData, User } from "tweeter-shared";
 import { Buffer } from "buffer";
 import useToastListener from "../../toaster/ToastListenerHook";
 import AuthenticationFields from "../AuthenticationFields";
 import useUserInfo from "../../userInfo/UserInfoHook";
 import { UserView } from "../../../presenters/UserPresenter";
-import { RegisterPresenter } from "../../../presenters/RegisterPresenter";
+import { RegisterUserPresenter } from "../../../presenters/RegisterUserPresenter";
 interface Props {
-  presenterGenerator: (view: UserView) => RegisterPresenter;
+  presenterGenerator: (view: UserView) => RegisterUserPresenter;
 }
 const Register = (props: Props) => {
   const [firstName, setFirstName] = useState("");
