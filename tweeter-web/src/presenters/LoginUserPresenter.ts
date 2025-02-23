@@ -7,8 +7,9 @@ export class LoginUserPresenter extends UserPresenter {
     super(view, originalUrl);
     this.userService = new UserService();
   }
+
   public async doLogin(alias: string, password: string) {
-    try {
+    this.doFailureReportingOperation(async () => {
       this.isLoading = true;
       const [user, authToken] = await this.userService.login(alias, password);
       this.view.updateUserInfo(user, user, authToken, this.rememberMe);
@@ -18,12 +19,7 @@ export class LoginUserPresenter extends UserPresenter {
       } else {
         this.view.navigate("/");
       }
-    } catch (error) {
-      this.view.displayErrorMessage(
-        `Failed to log user in because of exception: ${error}`
-      );
-    } finally {
-      this.isLoading = false;
-    }
+    }, "log user in");
+    this.isLoading = false;
   }
 }

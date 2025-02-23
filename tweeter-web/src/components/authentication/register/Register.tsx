@@ -17,9 +17,6 @@ const Register = (props: Props) => {
   const [lastName, setLastName] = useState("");
   const [alias, setAlias] = useState("");
   const [password, setPassword] = useState("");
-  const [imageBytes, setImageBytes] = useState<Uint8Array>(new Uint8Array());
-  const [imageUrl, setImageUrl] = useState<string>("");
-  const [imageFileExtension, setImageFileExtension] = useState<string>("");
 
   const navigate = useNavigate();
   const { updateUserInfo } = useUserInfo();
@@ -31,8 +28,8 @@ const Register = (props: Props) => {
       !lastName ||
       !alias ||
       !password ||
-      !imageUrl ||
-      !imageFileExtension
+      !presenter.imageUrl ||
+      !presenter.imageFileExtension
     );
   };
 
@@ -44,43 +41,7 @@ const Register = (props: Props) => {
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    handleImageFile(file);
-  };
-
-  const handleImageFile = (file: File | undefined) => {
-    if (file) {
-      setImageUrl(URL.createObjectURL(file));
-
-      const reader = new FileReader();
-      reader.onload = (event: ProgressEvent<FileReader>) => {
-        const imageStringBase64 = event.target?.result as string;
-
-        // Remove unnecessary file metadata from the start of the string.
-        const imageStringBase64BufferContents =
-          imageStringBase64.split("base64,")[1];
-
-        const bytes: Uint8Array = Buffer.from(
-          imageStringBase64BufferContents,
-          "base64"
-        );
-
-        setImageBytes(bytes);
-      };
-      reader.readAsDataURL(file);
-
-      // Set image file extension (and move to a separate method)
-      const fileExtension = getFileExtension(file);
-      if (fileExtension) {
-        setImageFileExtension(fileExtension);
-      }
-    } else {
-      setImageUrl("");
-      setImageBytes(new Uint8Array());
-    }
-  };
-
-  const getFileExtension = (file: File): string | undefined => {
-    return file.name.split(".").pop();
+    presenter.handleImageFile(file);
   };
 
   const listener: UserView = {
@@ -91,14 +52,7 @@ const Register = (props: Props) => {
   const [presenter] = useState(props.presenterGenerator(listener));
 
   const doRegister = () => {
-    presenter.doRegister(
-      firstName,
-      lastName,
-      alias,
-      password,
-      imageBytes,
-      imageFileExtension
-    );
+    presenter.doRegister(firstName, lastName, alias, password);
   };
 
   const inputFieldGenerator = () => {
@@ -142,7 +96,7 @@ const Register = (props: Props) => {
             onChange={handleFileChange}
           />
           <label htmlFor="imageFileInput">User Image</label>
-          <img src={imageUrl} className="img-thumbnail" alt=""></img>
+          <img src={presenter.imageUrl} className="img-thumbnail" alt=""></img>
         </div>
       </>
     );

@@ -1,6 +1,7 @@
 import { User, AuthToken } from "tweeter-shared";
+import { Presenter, View } from "./Presenter";
 
-export interface UserView {
+export interface UserView extends View {
   updateUserInfo: (
     currentUser: User,
     displayedUser: User | null,
@@ -8,16 +9,14 @@ export interface UserView {
     remember: boolean
   ) => void;
   navigate: (originalUrl: string) => void;
-  displayErrorMessage: (message: string) => void;
 }
-export abstract class UserPresenter {
-  private _view: UserView;
+export abstract class UserPresenter extends Presenter<UserView> {
   private _rememberMe = false;
   private _isLoading = false;
   private _originalUrl: string | void;
 
   protected constructor(view: UserView, originalUrl?: string) {
-    this._view = view;
+    super(view);
     this._originalUrl = originalUrl;
   }
   public get isLoading() {
@@ -29,11 +28,8 @@ export abstract class UserPresenter {
   public setRememberMe(rememberMe: boolean) {
     this._rememberMe = rememberMe;
   }
-  protected get rememberMe() {
+  public get rememberMe() {
     return this._rememberMe;
-  }
-  protected get view() {
-    return this._view;
   }
   protected get originalUrl() {
     return this._originalUrl;

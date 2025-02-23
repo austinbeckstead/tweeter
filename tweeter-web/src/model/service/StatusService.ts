@@ -1,9 +1,9 @@
-import { AuthToken, Status, FakeData } from "tweeter-shared";
+import { AuthToken, Status, FakeData, User } from "tweeter-shared";
 
 export class StatusService {
   public async loadMoreStoryItems(
     authToken: AuthToken,
-    userAlias: string,
+    user: User,
     pageSize: number,
     lastItem: Status | null
   ): Promise<[Status[], boolean]> {
@@ -13,7 +13,7 @@ export class StatusService {
 
   public async loadMoreFeedItems(
     authToken: AuthToken,
-    userAlias: string,
+    user: User,
     pageSize: number,
     lastItem: Status | null
   ): Promise<[Status[], boolean]> {
