@@ -1,39 +1,61 @@
-import { UserService } from "../model/service/UserService";
-import { UserPresenter, UserView } from "./UserPresenter";
+import { UserPresenter } from "./UserPresenter";
 import { Buffer } from "buffer";
+import { User, AuthToken } from "tweeter-shared";
 
 export class RegisterUserPresenter extends UserPresenter {
-  private userService: UserService;
   private imageBytes = new Uint8Array();
   private _imageUrl = "";
   private _imageFileExtension = "";
+  private _firstName = "";
+  private _lastName = "";
 
-  public constructor(view: UserView, originalUrl?: string) {
-    super(view, originalUrl);
-    this.userService = new UserService();
+  public registerUser(alias: string, password: string) {
+    this.authenticateUser(
+      alias,
+      password,
+      async (alias: string, password: string) => {
+        return this.service.register(
+          this.firstName,
+          this.lastName,
+          alias,
+          password,
+          this.imageBytes,
+          this._imageFileExtension
+        );
+      },
+      () => {
+        return "register user";
+      },
+      () => {
+        this.view.navigate("/");
+      }
+    );
   }
 
-  public async doRegister(
-    firstName: string,
-    lastName: string,
+  //For abstraction implementation
+  /*
+  protected async authenticate(
     alias: string,
     password: string
-  ) {
-    this.doFailureReportingOperation(async () => {
-      this.isLoading = true;
-      const [user, authToken] = await this.userService.register(
-        firstName,
-        lastName,
-        alias,
-        password,
-        this.imageBytes,
-        this._imageFileExtension
-      );
-      this.view.updateUserInfo(user, user, authToken, this.rememberMe);
-      this.view.navigate("/");
-    }, "register user");
-    this.isLoading = false;
+  ): Promise<[User, AuthToken]> {
+    return this.service.register(
+      this.firstName,
+      this.lastName,
+      alias,
+      password,
+      this.imageBytes,
+      this._imageFileExtension
+    );
   }
+  protected getMessageString(): string {
+    return "register user";
+  }
+  protected navigate(): void {
+    this.view.navigate("/");
+  }
+  */
+
+  //Image handling unique to register
   handleImageFile = (file: File | undefined) => {
     if (file) {
       this._imageUrl = URL.createObjectURL(file);
@@ -73,5 +95,17 @@ export class RegisterUserPresenter extends UserPresenter {
   }
   public get imageFileExtension() {
     return this._imageFileExtension;
+  }
+  public setFirstName(value: string) {
+    this._firstName = value;
+  }
+  public get firstName(): string {
+    return this._firstName;
+  }
+  public setLastName(value: string) {
+    this._lastName = value;
+  }
+  public get lastName(): string {
+    return this._lastName;
   }
 }

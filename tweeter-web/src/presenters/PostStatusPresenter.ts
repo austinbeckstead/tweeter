@@ -16,15 +16,15 @@ export class PostStatusPresenter extends Presenter<PostStatusView> {
   public get isLoading() {
     return this._isLoading;
   }
-  submitPost = async (post: string, currentUser: User | null) => {
+  public submitPost = async (post: string, currentUser: User | null) => {
+    this.view.displayInfoMessage("Posting status...", 0);
     this.doFailureReportingOperation(async () => {
       this._isLoading = true;
-      this.view.displayInfoMessage("Posting status...", 0);
       const status = new Status(post, currentUser!, Date.now());
       await this.statusService.postStatus(this.view.authToken!, status);
       this.view.displayInfoMessage("Status posted!", 2000);
+      this.view.clearLastInfoMessage();
     }, "post the status");
-    this.view.clearLastInfoMessage();
     this._isLoading = false;
   };
 }

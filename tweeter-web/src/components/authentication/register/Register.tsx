@@ -13,8 +13,6 @@ interface Props {
   presenterGenerator: (view: UserView) => RegisterUserPresenter;
 }
 const Register = (props: Props) => {
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
   const [alias, setAlias] = useState("");
   const [password, setPassword] = useState("");
 
@@ -24,8 +22,8 @@ const Register = (props: Props) => {
 
   const checkSubmitButtonStatus = (): boolean => {
     return (
-      !firstName ||
-      !lastName ||
+      !presenter.firstName ||
+      !presenter.lastName ||
       !alias ||
       !password ||
       !presenter.imageUrl ||
@@ -52,7 +50,7 @@ const Register = (props: Props) => {
   const [presenter] = useState(props.presenterGenerator(listener));
 
   const doRegister = () => {
-    presenter.doRegister(firstName, lastName, alias, password);
+    presenter.registerUser(alias, password);
   };
 
   const inputFieldGenerator = () => {
@@ -66,7 +64,7 @@ const Register = (props: Props) => {
             id="firstNameInput"
             placeholder="First Name"
             onKeyDown={registerOnEnter}
-            onChange={(event) => setFirstName(event.target.value)}
+            onChange={(event) => presenter.setFirstName(event.target.value)}
           />
           <label htmlFor="firstNameInput">First Name</label>
         </div>
@@ -78,7 +76,7 @@ const Register = (props: Props) => {
             id="lastNameInput"
             placeholder="Last Name"
             onKeyDown={registerOnEnter}
-            onChange={(event) => setLastName(event.target.value)}
+            onChange={(event) => presenter.setLastName(event.target.value)}
           />
           <label htmlFor="lastNameInput">Last Name</label>
         </div>

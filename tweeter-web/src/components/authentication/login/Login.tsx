@@ -56,7 +56,7 @@ const Login = (props: Props) => {
   const [presenter] = useState(props.presenterGenerator(listener));
 
   const doLogin = () => {
-    presenter.doLogin(alias, password);
+    presenter.loginUser(alias, password);
   };
   return (
     <AuthenticationFormLayout
