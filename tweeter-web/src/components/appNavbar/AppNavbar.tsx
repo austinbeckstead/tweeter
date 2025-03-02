@@ -7,7 +7,7 @@ import useUserInfo from "../userInfo/UserInfoHook";
 import {
   LogoutUserPresenter,
   LogoutUserView,
-} from "../../presenters/LogoutUserPresenter";
+} from "../../presenter/LogoutUserPresenter";
 import { useState } from "react";
 interface Props {
   presenterGenerator: (view: LogoutUserView) => LogoutUserPresenter;
@@ -23,6 +23,7 @@ const AppNavbar = (props: Props) => {
     displayErrorMessage: displayErrorMessage,
     clearLastInfoMessage: clearLastInfoMessage,
     clearUserInfo: clearUserInfo,
+    navigateToLogin: () => {},
     authToken: authToken,
   };
   const [presenter] = useState(props.presenterGenerator(listener));

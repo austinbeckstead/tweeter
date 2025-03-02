@@ -4,7 +4,7 @@ import useUserNavigation from "../statusItem/UserNavigationHook";
 import {
   NavigateUserView,
   NavigateUserPresenter,
-} from "../../presenters/NavigateUserPresenter";
+} from "../../presenter/NavigateUserPresenter";
 
 interface Props {
   value: User;

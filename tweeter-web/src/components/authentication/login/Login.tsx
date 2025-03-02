@@ -6,10 +6,11 @@ import AuthenticationFormLayout from "../AuthenticationFormLayout";
 import useToastListener from "../../toaster/ToastListenerHook";
 import AuthenticationFields from "../AuthenticationFields";
 import useUserInfo from "../../userInfo/UserInfoHook";
-import { LoginUserPresenter } from "../../../presenters/LoginUserPresenter";
-import { UserView } from "../../../presenters/UserPresenter";
+import { LoginUserPresenter } from "../../../presenter/LoginUserPresenter";
+import { UserView } from "../../../presenter/UserPresenter";
 interface Props {
-  presenterGenerator: (view: UserView) => LoginUserPresenter;
+  originalUrl?: string;
+  presenter?: LoginUserPresenter;
 }
 const Login = (props: Props) => {
   const [alias, setAlias] = useState("");
@@ -17,6 +18,15 @@ const Login = (props: Props) => {
   const navigate = useNavigate();
   const { updateUserInfo } = useUserInfo();
   const { displayErrorMessage } = useToastListener();
+
+  const listener: UserView = {
+    updateUserInfo: updateUserInfo,
+    navigate: navigate,
+    displayErrorMessage: displayErrorMessage,
+  };
+  const [presenter] = useState(
+    props.presenter ?? new LoginUserPresenter(listener)
+  );
 
   const checkSubmitButtonStatus = (): boolean => {
     return !alias || !password;
@@ -47,13 +57,6 @@ const Login = (props: Props) => {
       </div>
     );
   };
-
-  const listener: UserView = {
-    updateUserInfo: updateUserInfo,
-    navigate: navigate,
-    displayErrorMessage: displayErrorMessage,
-  };
-  const [presenter] = useState(props.presenterGenerator(listener));
 
   const doLogin = () => {
     presenter.loginUser(alias, password);

@@ -6,15 +6,15 @@ import UserInfo from "../userInfo/UserInfo";
 import {
   UserInfoPresenter,
   UserInfoView,
-} from "../../presenters/UserInfoPresenter";
+} from "../../presenter/UserInfoPresenter";
 import {
   PostStatusPresenter,
   PostStatusView,
-} from "../../presenters/PostStatusPresenter";
+} from "../../presenter/PostStatusPresenter";
 import {
   LogoutUserView,
   LogoutUserPresenter,
-} from "../../presenters/LogoutUserPresenter";
+} from "../../presenter/LogoutUserPresenter";
 
 const MainLayout = () => {
   return (
@@ -36,11 +36,7 @@ const MainLayout = () => {
                 />
               </div>
               <div className="p-3 border mt-1 rounded bg-light">
-                <PostStatus
-                  presenterGenerator={(view: PostStatusView) =>
-                    new PostStatusPresenter(view)
-                  }
-                />
+                <PostStatus />
               </div>
             </div>
           </div>

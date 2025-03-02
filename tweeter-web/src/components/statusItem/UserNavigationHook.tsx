@@ -2,7 +2,7 @@ import { useState } from "react";
 import {
   NavigateUserPresenter,
   NavigateUserView,
-} from "../../presenters/NavigateUserPresenter";
+} from "../../presenter/NavigateUserPresenter";
 import useToastListener from "../toaster/ToastListenerHook";
 import useUserInfo from "../userInfo/UserInfoHook";
 

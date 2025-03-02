@@ -1,4 +1,3 @@
-import { User, AuthToken } from "tweeter-shared";
 import { UserPresenter } from "./UserPresenter";
 
 export class LoginUserPresenter extends UserPresenter {

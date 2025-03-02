@@ -3,7 +3,7 @@ import { Status } from "tweeter-shared";
 import {
   NavigateUserView,
   NavigateUserPresenter,
-} from "../../presenters/NavigateUserPresenter";
+} from "../../presenter/NavigateUserPresenter";
 
 import Post from "./Post";
 import useUserNavigation from "./UserNavigationHook";

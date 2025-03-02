@@ -12,16 +12,16 @@ import MainLayout from "./components/mainLayout/MainLayout";
 import Toaster from "./components/toaster/Toaster";
 import { Status, User } from "tweeter-shared";
 import useUserInfo from "./components/userInfo/UserInfoHook";
-import { FolloweePresenter } from "./presenters/FolloweePresenter";
-import { FollowerPresenter } from "./presenters/FollowerPresenter";
-import { StoryItemPresenter } from "./presenters/StoryItemPresenter";
-import { FeedItemPresenter } from "./presenters/FeedItemPresenter";
-import { RegisterUserPresenter } from "./presenters/RegisterUserPresenter";
-import { LoginUserPresenter } from "./presenters/LoginUserPresenter";
-import { UserView } from "./presenters/UserPresenter";
+import { FolloweePresenter } from "./presenter/FolloweePresenter";
+import { FollowerPresenter } from "./presenter/FollowerPresenter";
+import { StoryItemPresenter } from "./presenter/StoryItemPresenter";
+import { FeedItemPresenter } from "./presenter/FeedItemPresenter";
+import { RegisterUserPresenter } from "./presenter/RegisterUserPresenter";
+import { LoginUserPresenter } from "./presenter/LoginUserPresenter";
+import { UserView } from "./presenter/UserPresenter";
 import ItemScroller from "./components/mainLayout/ItemScroller";
 import UserItem from "./components/userItem/UserItem";
-import { PagedItemView } from "./presenters/PagedItemPresenter";
+import { PagedItemView } from "./presenter/PagedItemPresenter";
 import StatusItem from "./components/statusItem/StatusItem";
 
 const App = () => {
@@ -114,16 +114,7 @@ const UnauthenticatedRoutes = () => {
 
   return (
     <Routes>
-      <Route
-        path="/login"
-        element={
-          <Login
-            presenterGenerator={(view: UserView) =>
-              new LoginUserPresenter(view)
-            }
-          />
-        }
-      />
+      <Route path="/login" element={<Login />} />
       <Route
         path="/register"
         element={
@@ -134,16 +125,7 @@ const UnauthenticatedRoutes = () => {
           />
         }
       />
-      <Route
-        path="*"
-        element={
-          <Login
-            presenterGenerator={(view: UserView) =>
-              new LoginUserPresenter(view, location.pathname)
-            }
-          />
-        }
-      />
+      <Route path="*" element={<Login originalUrl={location.pathname} />} />
     </Routes>
   );
 };

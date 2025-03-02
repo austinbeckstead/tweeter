@@ -7,8 +7,8 @@ import { Buffer } from "buffer";
 import useToastListener from "../../toaster/ToastListenerHook";
 import AuthenticationFields from "../AuthenticationFields";
 import useUserInfo from "../../userInfo/UserInfoHook";
-import { UserView } from "../../../presenters/UserPresenter";
-import { RegisterUserPresenter } from "../../../presenters/RegisterUserPresenter";
+import { UserView } from "../../../presenter/UserPresenter";
+import { RegisterUserPresenter } from "../../../presenter/RegisterUserPresenter";
 interface Props {
   presenterGenerator: (view: UserView) => RegisterUserPresenter;
 }

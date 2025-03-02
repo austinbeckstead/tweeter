@@ -5,9 +5,9 @@ import useUserInfo from "../userInfo/UserInfoHook";
 import {
   PostStatusPresenter,
   PostStatusView,
-} from "../../presenters/PostStatusPresenter";
+} from "../../presenter/PostStatusPresenter";
 interface Props {
-  presenterGenerator: (view: PostStatusView) => PostStatusPresenter;
+  presenter?: PostStatusPresenter;
 }
 const PostStatus = (props: Props) => {
   const { displayErrorMessage, displayInfoMessage, clearLastInfoMessage } =
@@ -20,10 +20,11 @@ const PostStatus = (props: Props) => {
     displayInfoMessage: displayInfoMessage,
     clearLastInfoMessage: clearLastInfoMessage,
     authToken: authToken,
+    clearPost: () => {},
   };
-
-  const [presenter] = useState(props.presenterGenerator(listener));
-
+  const [presenter] = useState(
+    props.presenter ?? new PostStatusPresenter(listener)
+  );
   const submitPost = async (event: React.MouseEvent) => {
     event.preventDefault();
     presenter.submitPost(post, currentUser);
@@ -35,8 +36,8 @@ const PostStatus = (props: Props) => {
     setPost("");
   };
 
-  const checkButtonStatus: () => boolean = () => {
-    return !post.trim() || !authToken || !currentUser;
+  const checkButtonStatus = (): boolean => {
+    return !post.trim() /*|| !authToken || !currentUser*/;
   };
 
   return (

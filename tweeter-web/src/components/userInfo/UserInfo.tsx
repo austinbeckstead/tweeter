@@ -6,7 +6,7 @@ import useUserInfo from "./UserInfoHook";
 import {
   UserInfoView,
   UserInfoPresenter,
-} from "../../presenters/UserInfoPresenter";
+} from "../../presenter/UserInfoPresenter";
 interface Props {
   presenterGenerator: (view: UserInfoView) => UserInfoPresenter;
 }
