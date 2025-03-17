@@ -1,0 +1,21 @@
+{
+  "name": "tweeter",
+  "version": "1.0.0",
+  "workspaces": [
+    "tweeter-shared",
+    "tweeter-web"
+  ],
+  "author": "JWilkerson",
+  "license": "ISC",
+  "dependencies": {
+    "rimraf": "^5.0.5",
+    "vite-plugin-dts": "^3.7.3"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.26.9",
+    "@babel/preset-env": "^7.26.9",
+    "@types/jest": "^29.5.14",
+    "babel-jest": "^29.7.0",
+    "ts-jest": "^29.2.6"
+  }
+}
