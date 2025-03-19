@@ -1,4 +1,13 @@
-import { User, AuthToken, FakeData, LoginUserRequest } from "tweeter-shared";
+import {
+  User,
+  AuthToken,
+  FakeData,
+  LoginUserRequest,
+  RegisterUserRequest,
+  GetUserRequest,
+  GetIsFollowerStatusRequest,
+  LogoutUserRequest,
+} from "tweeter-shared";
 import { Buffer } from "buffer";
 import { ServerFacade } from "../../network/ServerFacade";
 
@@ -32,20 +41,26 @@ export class UserService {
       Buffer.from(userImageBytes).toString("base64");
 
     // TODO: Replace with the result of calling the server
-    const user = FakeData.instance.firstUser;
-
-    if (user === null) {
-      throw new Error("Invalid registration");
-    }
-
-    return [user, FakeData.instance.authToken];
+    const request: RegisterUserRequest = {
+      firstName: firstName,
+      lastName: lastName,
+      alias: alias,
+      password: password,
+      userImageBytes: imageStringBase64,
+      imageFileExtension: imageFileExtension,
+    };
+    return this.serverFacade.registerUser(request);
   }
   public async getUser(
     authToken: AuthToken,
     alias: string
   ): Promise<User | null> {
     // TODO: Replace with the result of calling server
-    return FakeData.instance.findUserByAlias(alias);
+    const request: GetUserRequest = {
+      token: authToken.token,
+      alias: alias,
+    };
+    return this.serverFacade.getUser(request);
   }
 
   public async getIsFollowerStatus(
@@ -54,14 +69,23 @@ export class UserService {
     selectedUser: User
   ): Promise<boolean> {
     // TODO: Replace with the result of calling server
-    return FakeData.instance.isFollower();
+    const request: GetIsFollowerStatusRequest = {
+      token: authToken.token,
+      userAlias: user.alias,
+      selectedUserAlias: selectedUser.alias,
+    };
+    return this.serverFacade.getIsFollower(request);
   }
   public async getFolloweeCount(
     authToken: AuthToken,
     user: User
   ): Promise<number> {
     // TODO: Replace with the result of calling server
-    return FakeData.instance.getFolloweeCount(user.alias);
+    const request: GetUserRequest = {
+      token: authToken.token,
+      alias: user.alias,
+    };
+    return this.serverFacade.getFolloweeCount(request);
   }
 
   public async getFollowerCount(
@@ -69,7 +93,11 @@ export class UserService {
     user: User
   ): Promise<number> {
     // TODO: Replace with the result of calling server
-    return FakeData.instance.getFollowerCount(user.alias);
+    const request: GetUserRequest = {
+      token: authToken.token,
+      alias: user.alias,
+    };
+    return this.serverFacade.getFollowerCount(request);
   }
 
   public async follow(
@@ -77,34 +105,29 @@ export class UserService {
     userToFollow: User
   ): Promise<[followerCount: number, followeeCount: number]> {
     // Pause so we can see the follow message. Remove when connected to the server
-    await new Promise((f) => setTimeout(f, 2000));
+    const request: GetUserRequest = {
+      token: authToken.token,
+      alias: userToFollow.alias,
+    };
     // TODO: Call the server
-    const followerCount = await this.getFollowerCount(authToken, userToFollow);
-    const followeeCount = await this.getFolloweeCount(authToken, userToFollow);
-
-    return [followerCount, followeeCount];
+    return this.serverFacade.followUser(request);
   }
   public async unfollow(
     authToken: AuthToken,
-    userToUnfollow: User
+    userToFollow: User
   ): Promise<[followerCount: number, followeeCount: number]> {
     // Pause so we can see the unfollow message. Remove when connected to the server
-    await new Promise((f) => setTimeout(f, 2000));
-
+    const request: GetUserRequest = {
+      token: authToken.token,
+      alias: userToFollow.alias,
+    };
     // TODO: Call the server
-
-    const followerCount = await this.getFollowerCount(
-      authToken,
-      userToUnfollow
-    );
-    const followeeCount = await this.getFolloweeCount(
-      authToken,
-      userToUnfollow
-    );
-
-    return [followerCount, followeeCount];
+    return this.serverFacade.unfollowUser(request);
   }
   public async logout(authToken: AuthToken): Promise<void> {
-    await new Promise((res) => setTimeout(res, 1000));
+    const request: LogoutUserRequest = {
+      token: authToken.token,
+    };
+    return this.serverFacade.logoutUser(request);
   }
 }

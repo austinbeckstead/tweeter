@@ -1,6 +1,5 @@
 import { UserPresenter } from "./UserPresenter";
 import { Buffer } from "buffer";
-import { User, AuthToken } from "tweeter-shared";
 
 export class RegisterUserPresenter extends UserPresenter {
   private imageBytes = new Uint8Array();

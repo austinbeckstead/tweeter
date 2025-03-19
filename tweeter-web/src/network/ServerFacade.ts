@@ -8,8 +8,16 @@ import {
   PostStatusRequest,
   TweeterResponse,
   LoginUserRequest,
-  LoginUserResponse,
+  UserResponse,
   AuthToken,
+  RegisterUserRequest,
+  GetUserRequest,
+  GetUserResponse,
+  GetIsFollowerStatusRequest,
+  GetIsFollowerStatusResponse,
+  GetFollowsResponse,
+  FollowUserResponse,
+  LogoutUserRequest,
 } from "tweeter-shared";
 import { ClientCommunicator } from "./ClientCommunicator";
 
@@ -105,8 +113,69 @@ export class ServerFacade {
   ): Promise<[User, AuthToken]> {
     const response = await this.clientCommunicator.doPost<
       LoginUserRequest,
-      LoginUserResponse
+      UserResponse
     >(request, `/user/login`);
     return [User.fromDto(response.user)!, response.token];
+  }
+  public async registerUser(
+    request: RegisterUserRequest
+  ): Promise<[User, AuthToken]> {
+    const response = await this.clientCommunicator.doPost<
+      RegisterUserRequest,
+      UserResponse
+    >(request, `/user/register`);
+    return [User.fromDto(response.user)!, response.token];
+  }
+  public async getUser(request: GetUserRequest): Promise<User | null> {
+    const response = await this.clientCommunicator.doPost<
+      GetUserRequest,
+      GetUserResponse
+    >(request, `/user/get`);
+    return response.user ? User.fromDto(response.user) : null;
+  }
+  public async getIsFollower(
+    request: GetIsFollowerStatusRequest
+  ): Promise<boolean> {
+    const response = await this.clientCommunicator.doPost<
+      GetIsFollowerStatusRequest,
+      GetIsFollowerStatusResponse
+    >(request, `/user/getIsFollower`);
+    return response.isFollower;
+  }
+  public async getFolloweeCount(request: GetUserRequest): Promise<number> {
+    const response = await this.clientCommunicator.doPost<
+      GetUserRequest,
+      GetFollowsResponse
+    >(request, `/user/getFolloweeCount`);
+    return response.followsCount;
+  }
+  public async getFollowerCount(request: GetUserRequest): Promise<number> {
+    const response = await this.clientCommunicator.doPost<
+      GetUserRequest,
+      GetFollowsResponse
+    >(request, `/user/getFollowerCount`);
+    return response.followsCount;
+  }
+  public async followUser(request: GetUserRequest): Promise<[number, number]> {
+    const response = await this.clientCommunicator.doPost<
+      GetUserRequest,
+      FollowUserResponse
+    >(request, `/user/follow`);
+    return [response.followerCount, response.followeeCount];
+  }
+  public async unfollowUser(
+    request: GetUserRequest
+  ): Promise<[number, number]> {
+    const response = await this.clientCommunicator.doPost<
+      GetUserRequest,
+      FollowUserResponse
+    >(request, `/user/unfollow`);
+    return [response.followerCount, response.followeeCount];
+  }
+  public async logoutUser(request: LogoutUserRequest): Promise<void> {
+    await this.clientCommunicator.doPost<LogoutUserRequest, TweeterResponse>(
+      request,
+      `/user/logout`
+    );
   }
 }
