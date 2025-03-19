@@ -1,22 +1,17 @@
-import { User, AuthToken, FakeData, LoginUserRequest } from "tweeter-shared";
+import { User, AuthToken, FakeData, UserDto } from "tweeter-shared";
 import { Buffer } from "buffer";
-import { ServerFacade } from "../../network/ServerFacade";
 
 export class UserService {
-  private serverFacade: ServerFacade;
-  public constructor() {
-    this.serverFacade = new ServerFacade();
-  }
-
   public async login(
     alias: string,
     password: string
-  ): Promise<[User, AuthToken]> {
-    const request: LoginUserRequest = {
-      alias: alias,
-      password: password,
-    };
-    return this.serverFacade.loginUser(request);
+  ): Promise<[UserDto, AuthToken]> {
+    // TODO: Replace with the result of calling the server
+    const user = FakeData.instance.firstUser;
+    if (user === null) {
+      throw new Error("Invalid alias or password");
+    }
+    return [user.dto, FakeData.instance.authToken];
   }
 
   public async register(
