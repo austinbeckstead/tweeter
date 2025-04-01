@@ -15,8 +15,12 @@ import {
   LogoutUserView,
   LogoutUserPresenter,
 } from "../../presenter/LogoutUserPresenter";
+import { UserInfoContext } from "../userInfo/UserInfoProvider";
+import { useContext } from "react";
 
 const MainLayout = () => {
+  const { authToken, clearUserInfo } = useContext(UserInfoContext);
+
   return (
     <>
       <AppNavbar

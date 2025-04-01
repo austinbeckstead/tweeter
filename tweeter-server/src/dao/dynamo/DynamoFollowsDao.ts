@@ -24,10 +24,6 @@ export class DynamoFollowsDAO implements FollowsDao {
    * @param follows
    */
   async addFollows(follows: Follows): Promise<void> {
-    // load it if it exists
-    const followsInDatabase: Follows | undefined = await this.getFollows(
-      follows
-    );
     await this.putFollower(follows);
   }
   //TESTING

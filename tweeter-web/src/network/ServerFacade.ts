@@ -110,21 +110,23 @@ export class ServerFacade {
   }
   public async loginUser(
     request: LoginUserRequest
-  ): Promise<[User, AuthToken]> {
+  ): Promise<[User | null, AuthToken | null, string | undefined]> {
     const response = await this.clientCommunicator.doPost<
       LoginUserRequest,
       UserResponse
     >(request, `/user/login`);
-    return [User.fromDto(response.user)!, response.token];
+    const authToken = AuthToken.fromJson(JSON.stringify(response.token));
+    return [User.fromDto(response.user)!, authToken, response.message];
   }
   public async registerUser(
     request: RegisterUserRequest
-  ): Promise<[User, AuthToken]> {
+  ): Promise<[User | null, AuthToken | null, string | undefined]> {
     const response = await this.clientCommunicator.doPost<
       RegisterUserRequest,
       UserResponse
     >(request, `/user/register`);
-    return [User.fromDto(response.user)!, response.token];
+    const authToken = AuthToken.fromJson(JSON.stringify(response.token));
+    return [User.fromDto(response.user), authToken, response.message];
   }
   public async getUser(request: GetUserRequest): Promise<User | null> {
     const response = await this.clientCommunicator.doPost<

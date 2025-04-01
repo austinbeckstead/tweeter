@@ -20,7 +20,7 @@ export class UserService {
   public async login(
     alias: string,
     password: string
-  ): Promise<[User, AuthToken]> {
+  ): Promise<[User | null, AuthToken | null, string | undefined]> {
     const request: LoginUserRequest = {
       alias: alias,
       password: password,
@@ -35,7 +35,7 @@ export class UserService {
     password: string,
     userImageBytes: Uint8Array,
     imageFileExtension: string
-  ): Promise<[User, AuthToken]> {
+  ): Promise<[User | null, AuthToken | null, string | undefined]> {
     // Not neded now, but will be needed when you make the request to the server in milestone 3
     const imageStringBase64: string =
       Buffer.from(userImageBytes).toString("base64");
@@ -135,6 +135,8 @@ export class UserService {
     const request: LogoutUserRequest = {
       token: authToken.token,
     };
+    console.log("HEREHREHRHEHRE");
+    console.log(authToken.token);
     return this.serverFacade.logoutUser(request);
   }
 }

@@ -1,4 +1,5 @@
 import { User, AuthToken } from "tweeter-shared";
+import { collapseTextChangeRangesAcrossMultipleVersions } from "typescript";
 import { UserService } from "../model/service/UserService";
 import { Presenter, View } from "./Presenter";
 
@@ -45,14 +46,22 @@ export abstract class UserPresenter extends Presenter<UserView> {
     authenticate: (
       alias: string,
       password: string
-    ) => Promise<[User, AuthToken]>,
+    ) => Promise<[User | null, AuthToken | null, string | undefined]>,
     getMessageString: () => string,
     navigate: () => void
   ) {
     this.doFailureReportingOperation(async () => {
       this.isLoading = true;
-      const [user, authToken] = await authenticate(alias, password);
-      this.view.updateUserInfo(user, user, authToken, this.rememberMe);
+      const [user, authToken, message] = await authenticate(alias, password);
+      if (user == null) {
+        this.view.displayErrorMessage(message!);
+        this.isLoading = false;
+        return;
+      }
+      this.view.updateUserInfo(user, user, authToken!, this.rememberMe);
+      console.log("TOKEN TOKEN");
+      console.log(authToken!.token);
+      collapseTextChangeRangesAcrossMultipleVersions;
       navigate();
     }, getMessageString());
   }

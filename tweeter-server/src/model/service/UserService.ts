@@ -2,8 +2,11 @@ import { User, AuthToken, FakeData, UserDto } from "tweeter-shared";
 import { AuthDao } from "../../dao/AuthDao";
 import { DynamoFactory } from "../../dao/dynamo/DynamoFactory";
 import { FollowsDao } from "../../dao/FollowsDao";
+import { UserDao } from "../../dao/UserDao";
 import { Auth } from "../../entity/Auth";
 import { Follows } from "../../entity/Follows";
+import { UserEntity } from "../../entity/UserEntity";
+import { randomBytes } from "crypto";
 
 //For User table:
 // Partition Key: Alias      Sort Key: None
@@ -29,20 +32,37 @@ export class UserService {
   factory = new DynamoFactory();
   followsDao: FollowsDao;
   authDao: AuthDao;
+  userDao: UserDao;
   public constructor() {
     this.followsDao = this.factory.getFollowsDAO();
     this.authDao = this.factory.getAuthDAO();
+    this.userDao = this.factory.getUserDAO();
   }
   public async login(
     alias: string,
     password: string
   ): Promise<[UserDto, AuthToken]> {
     // TODO: Replace with the result of calling the server
-    const user = FakeData.instance.firstUser;
-    if (user === null) {
+    const userEntity = await this.userDao.getUser(alias);
+    //validate alias
+    if (userEntity === undefined) {
       throw new Error("Invalid alias or password");
     }
-    return [user.dto, FakeData.instance.authToken];
+    //validate password
+
+    const correctPassword = userEntity!.password;
+    if (password != correctPassword) {
+      throw new Error("Invalid alias or password");
+    }
+    const user = new User(
+      userEntity.first_name,
+      userEntity.last_name,
+      userEntity.alias,
+      ""
+    );
+    //generate auth
+    const authToken = await this.generateAuth(alias);
+    return [user.dto, authToken];
   }
 
   public async register(
@@ -53,32 +73,53 @@ export class UserService {
     userImageBytes: string,
     imageFileExtension: string
   ): Promise<[UserDto, AuthToken]> {
-    // Not neded now, but will be needed when you make the request to the server in milestone 3
-
-    // TODO: Replace with the result of calling the server
-    const user = FakeData.instance.firstUser;
-    if (user === null) {
-      throw new Error("Invalid registration");
+    const takenUser = await this.userDao.getUser(alias);
+    //Make sure alias isn't taken
+    if (takenUser != undefined) {
+      throw new Error("Alias Taken");
     }
-    return [user.dto, FakeData.instance.authToken];
+    const userEntity = new UserEntity(firstName, lastName, alias, password);
+    //add User to database
+    await this.userDao.addUser(userEntity);
+    const user = new User(firstName, lastName, alias, "");
+    //generate Auth
+    const authToken = await this.generateAuth(alias);
+    return [user.dto, authToken];
   }
   public async getUser(token: string, alias: string): Promise<UserDto | null> {
     // TODO: Replace with the result of calling server
-    const user: User | null = FakeData.instance.findUserByAlias(alias);
+    const authToken = await this.authDao.getAuth(token);
+    if (authToken == undefined) {
+      throw new Error("Not Authenticated");
+    }
+    const userEntity = await this.userDao.getUser(alias);
+    const user = userEntity
+      ? new User(
+          userEntity.first_name,
+          userEntity.last_name,
+          userEntity.alias,
+          ""
+        )
+      : null;
     return user ? user.dto : null;
   }
-
+  private async generateAuth(alias: string): Promise<AuthToken> {
+    const token = AuthToken.Generate();
+    await this.authDao.addAuth(new Auth(token.token, alias));
+    return token;
+  }
   public async getIsFollower(
     token: string,
     userAlias: string,
     selectedUserAlias: string
   ): Promise<boolean> {
     // TODO: Replace with the result of calling server
-    let follows: Follows | undefined = new Follows(
-      selectedUserAlias,
-      userAlias
+    let followsQuery: Follows | undefined = new Follows(
+      //userAlias,
+      "EDITED ALIAS",
+      selectedUserAlias
     );
-    follows = await this.followsDao.getFollows(follows);
+    const follows = await this.followsDao.getFollows(followsQuery);
     return follows != undefined;
   }
   public async getFolloweeCount(
@@ -103,8 +144,7 @@ export class UserService {
   ): Promise<[followerCount: number, followeeCount: number]> {
     // Pause so we can see the follow message. Remove when connected to the server
     //need to implement getting user alias from authToken
-    const auth = new Auth(token, "");
-    const userAlias = await this.authDao.getAliasFromAuth(auth);
+    const userAlias = await this.authDao.getAliasFromAuth(token);
     const follows = new Follows(userAlias!, selectedAlias);
     await this.followsDao.addFollows(follows);
     const followerCount = await this.getFollowerCount(token, userAlias!);
@@ -116,8 +156,7 @@ export class UserService {
     selectedAlias: string
   ): Promise<[followerCount: number, followeeCount: number]> {
     // Pause so we can see the unfollow message. Remove when connected to the server
-    const auth = new Auth(token, "");
-    const userAlias = await this.authDao.getAliasFromAuth(auth);
+    const userAlias = await this.authDao.getAliasFromAuth(token);
     const follows = new Follows(userAlias!, selectedAlias);
     await this.followsDao.deleteFollows(follows);
 
@@ -128,6 +167,6 @@ export class UserService {
     return [followerCount, followeeCount];
   }
   public async logout(token: string): Promise<void> {
-    await new Promise((res) => setTimeout(res, 1000));
+    await this.authDao.deleteAuth(token);
   }
 }

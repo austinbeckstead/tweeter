@@ -20,8 +20,6 @@ export class DynamoAuthDAO implements AuthDao {
    * @param auth
    */
   async addAuth(auth: Auth): Promise<void> {
-    // load it if it exists
-    const authToken: Auth | undefined = await this.getAuth(auth);
     await this.putAuth(auth);
   }
 
@@ -36,10 +34,12 @@ export class DynamoAuthDAO implements AuthDao {
     await this.client.send(new PutCommand(params));
   }
 
-  public async getAuth(auth: Auth): Promise<Auth | undefined> {
+  public async getAuth(token: string): Promise<Auth | undefined> {
     const params = {
       TableName: this.tableName,
-      Key: this.generateAuthItem(auth),
+      Key: {
+        [this.auth_token]: token,
+      },
     };
     const output = await this.client.send(new GetCommand(params));
     return output.Item == undefined
@@ -52,21 +52,17 @@ export class DynamoAuthDAO implements AuthDao {
    *
    * @param auth
    */
-  async deleteAuth(auth: Auth): Promise<void> {
+  async deleteAuth(token: string): Promise<void> {
     const params = {
       TableName: this.tableName,
-      Key: this.generateAuthItem(auth),
+      Key: {
+        [this.auth_token]: token,
+      },
     };
     await this.client.send(new DeleteCommand(params));
   }
-  async getAliasFromAuth(auth: Auth): Promise<string | undefined> {
-    const auth_token = await this.getAuth(auth);
+  async getAliasFromAuth(token: string): Promise<string | undefined> {
+    const auth_token = await this.getAuth(token);
     return auth_token ? auth_token.alias : undefined;
-  }
-
-  private generateAuthItem(auth: Auth) {
-    return {
-      [this.auth_token]: auth.auth_token,
-    };
   }
 }

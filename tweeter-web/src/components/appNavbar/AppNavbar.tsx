@@ -24,11 +24,10 @@ const AppNavbar = (props: Props) => {
     clearLastInfoMessage: clearLastInfoMessage,
     clearUserInfo: clearUserInfo,
     navigateToLogin: () => {},
-    authToken: authToken,
   };
   const [presenter] = useState(props.presenterGenerator(listener));
   const logOut = async () => {
-    presenter.logOut();
+    if (authToken) presenter.logOut(authToken);
   };
   return (
     <Navbar
