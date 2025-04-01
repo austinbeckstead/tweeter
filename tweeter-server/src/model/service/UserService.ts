@@ -1,7 +1,38 @@
 import { User, AuthToken, FakeData, UserDto } from "tweeter-shared";
-import { Buffer } from "buffer";
+import { AuthDao } from "../../dao/AuthDao";
+import { DynamoFactory } from "../../dao/dynamo/DynamoFactory";
+import { FollowsDao } from "../../dao/FollowsDao";
+import { Auth } from "../../entity/Auth";
+import { Follows } from "../../entity/Follows";
+
+//For User table:
+// Partition Key: Alias      Sort Key: None
+
+//For AuthToken table:
+// Partition Key: AuthToken  Sort Key: None
+
+//For Feed table:
+// Partition Key: Receiver Alias  Sort Key: Timestamp (isodate) and Sender Alias concatenated
+
+//For Story table:
+// Partition Key: Sender Alias      Sort Key: Timestamp (display order)
+
+//For Follows table:
+// Partition Key: Follower Alias     Sort Key: followee alias
+
+//For batch get of user data for feed, use VisitorDAO from dynamodb samples (databases exercise) use
+// aliases instead of visitorNames
+
+//Pass factories in when doing service constructor in Lambdas
 
 export class UserService {
+  factory = new DynamoFactory();
+  followsDao: FollowsDao;
+  authDao: AuthDao;
+  public constructor() {
+    this.followsDao = this.factory.getFollowsDAO();
+    this.authDao = this.factory.getAuthDAO();
+  }
   public async login(
     alias: string,
     password: string
@@ -43,14 +74,19 @@ export class UserService {
     selectedUserAlias: string
   ): Promise<boolean> {
     // TODO: Replace with the result of calling server
-    return FakeData.instance.isFollower();
+    let follows: Follows | undefined = new Follows(
+      selectedUserAlias,
+      userAlias
+    );
+    follows = await this.followsDao.getFollows(follows);
+    return follows != undefined;
   }
   public async getFolloweeCount(
     token: string,
     userAlias: string
   ): Promise<number> {
     // TODO: Replace with the result of calling server
-    return FakeData.instance.getFolloweeCount(userAlias);
+    return this.followsDao.getNumFollowees(token, userAlias);
   }
 
   public async getFollowerCount(
@@ -58,30 +94,36 @@ export class UserService {
     userAlias: string
   ): Promise<number> {
     // TODO: Replace with the result of calling server
-    return FakeData.instance.getFollowerCount(userAlias);
+    return this.followsDao.getNumFollowers(token, userAlias);
   }
 
   public async follow(
     token: string,
-    userAlias: string
+    selectedAlias: string
   ): Promise<[followerCount: number, followeeCount: number]> {
     // Pause so we can see the follow message. Remove when connected to the server
-    await new Promise((f) => setTimeout(f, 2000));
-    // TODO: Call the server
-    const followerCount = await this.getFollowerCount(token, userAlias);
-    const followeeCount = await this.getFolloweeCount(token, userAlias);
+    //need to implement getting user alias from authToken
+    const auth = new Auth(token, "");
+    const userAlias = await this.authDao.getAliasFromAuth(auth);
+    const follows = new Follows(userAlias!, selectedAlias);
+    await this.followsDao.addFollows(follows);
+    const followerCount = await this.getFollowerCount(token, userAlias!);
+    const followeeCount = await this.getFolloweeCount(token, userAlias!);
     return [followerCount, followeeCount];
   }
   public async unfollow(
     token: string,
-    userAlias: string
+    selectedAlias: string
   ): Promise<[followerCount: number, followeeCount: number]> {
     // Pause so we can see the unfollow message. Remove when connected to the server
-    await new Promise((f) => setTimeout(f, 2000));
+    const auth = new Auth(token, "");
+    const userAlias = await this.authDao.getAliasFromAuth(auth);
+    const follows = new Follows(userAlias!, selectedAlias);
+    await this.followsDao.deleteFollows(follows);
 
     // TODO: Call the server
-    const followeeCount = await this.getFolloweeCount(token, userAlias);
-    const followerCount = await this.getFollowerCount(token, userAlias);
+    const followeeCount = await this.getFolloweeCount(token, selectedAlias);
+    const followerCount = await this.getFollowerCount(token, selectedAlias);
 
     return [followerCount, followeeCount];
   }
