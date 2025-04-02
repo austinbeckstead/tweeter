@@ -7,6 +7,7 @@ import {
   PagedItemPresenter,
   PagedItemView,
 } from "../../presenter/PagedItemPresenter";
+import { User } from "tweeter-shared";
 
 interface Props<T, U> {
   presenterGenerator: (view: PagedItemView<T>) => PagedItemPresenter<T, U>;
@@ -21,7 +22,6 @@ const ItemScroller = <T, U>(props: Props<T, U>) => {
   const [changedDisplayedUser, setChangedDisplayedUser] = useState(true);
 
   const { displayedUser, authToken } = useUserInfo();
-
   // Initialize the component whenever the displayed user changes
   useEffect(() => {
     reset();
@@ -30,6 +30,7 @@ const ItemScroller = <T, U>(props: Props<T, U>) => {
   // Load initial items whenever the displayed user changes. Done in a separate useEffect hook so the changes from reset will be visible.
   useEffect(() => {
     if (changedDisplayedUser) {
+      console.log("TRIGGERED BECAUSE OF CHANGE USER");
       loadMoreItems();
     }
   }, [changedDisplayedUser]);
@@ -42,6 +43,7 @@ const ItemScroller = <T, U>(props: Props<T, U>) => {
   }, [newItems]);
 
   const reset = async () => {
+    console.log("RESET");
     setItems([]);
     setNewItems([]);
     setChangedDisplayedUser(true);
@@ -55,7 +57,8 @@ const ItemScroller = <T, U>(props: Props<T, U>) => {
   const [presenter] = useState(props.presenterGenerator(listener));
 
   const loadMoreItems = async () => {
-    presenter.loadMoreItems(authToken!, displayedUser!);
+    console.log("LOADING MORE ITEMS");
+    await presenter.loadMoreItems(authToken!, displayedUser!);
     setChangedDisplayedUser(false);
   };
 

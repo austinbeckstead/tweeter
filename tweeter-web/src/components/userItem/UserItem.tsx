@@ -34,7 +34,9 @@ const UserItem = (props: Props) => {
               -{" "}
               <Link
                 to={props.value.alias}
-                onClick={(event) => navigateToUser(event)}
+                onClick={(event) => {
+                  navigateToUser(event);
+                }}
               >
                 {props.value.alias}
               </Link>

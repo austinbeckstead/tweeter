@@ -20,43 +20,67 @@ const UserInfo = (props: Props) => {
   if (!displayedUser) {
     setDisplayedUser(currentUser!);
   }
-
-  useEffect(() => {
-    presenter.setIsFollowerStatus(currentUser!, displayedUser!);
-    presenter.setNumbFollowees(displayedUser!);
-    presenter.setNumbFollowers(displayedUser!);
-  }, [displayedUser]);
-
   const listener: UserInfoView = {
     displayErrorMessage: displayErrorMessage,
     displayInfoMessage: displayInfoMessage,
     clearLastInfoMessage: clearLastInfoMessage,
     authToken: authToken,
   };
-
   const [presenter] = useState(props.presenterGenerator(listener));
+
+  const [isLoading, setIsLoading] = useState(presenter.isLoading);
+  useEffect(() => {
+    setIsLoading(presenter.isLoading);
+  }, [presenter.isLoading]);
+
+  useEffect(() => {
+    setIsLoading(true);
+    const fetchData = async () => {
+      console.log(currentUser!.alias);
+      console.log(displayedUser!.alias);
+      await presenter.setIsFollowerStatus(currentUser!, displayedUser!);
+      await presenter.setNumbFollowees(displayedUser!);
+      await presenter.setNumbFollowers(displayedUser!);
+      // Now that all async calls are complete, update the state
+      setIsFollower(presenter.isFollower);
+      setFolloweeCount(presenter.followeeCount);
+      setFollowerCount(presenter.followerCount);
+      setIsLoading(false);
+    };
+    fetchData();
+  }, [displayedUser]);
+
+  const [isFollower, setIsFollower] = useState(presenter.isFollower);
+  const [followeeCount, setFolloweeCount] = useState(presenter.followeeCount);
+  const [followerCount, setFollowerCount] = useState(presenter.followerCount);
 
   const switchToLoggedInUser = (event: React.MouseEvent): void => {
     event.preventDefault();
     setDisplayedUser(currentUser!);
+    setFolloweeCount(presenter.followeeCount);
+    setFollowerCount(presenter.followerCount);
   };
 
   const followDisplayedUser = async (
     event: React.MouseEvent
   ): Promise<void> => {
     event.preventDefault();
-    presenter.followDisplayedUser(displayedUser);
+    await presenter.followDisplayedUser(displayedUser);
+    setIsFollower(presenter.isFollower);
+    setFolloweeCount(presenter.followeeCount);
   };
 
   const unfollowDisplayedUser = async (
     event: React.MouseEvent
   ): Promise<void> => {
     event.preventDefault();
-    presenter.unfollowDisplayedUser(displayedUser);
+    await presenter.unfollowDisplayedUser(displayedUser);
+    setIsFollower(presenter.isFollower);
+    setFollowerCount(presenter.followerCount);
   };
 
   return (
-    <div className={presenter.isLoading ? "loading" : ""}>
+    <div className={isLoading ? "loading" : ""}>
       {currentUser === null || displayedUser === null || authToken === null ? (
         <></>
       ) : (
@@ -87,17 +111,16 @@ const UserInfo = (props: Props) => {
               </h2>
               <h3>{displayedUser.alias}</h3>
               <br />
-              {presenter.followeeCount > -1 && presenter.followerCount > -1 && (
+              {followeeCount > -1 && followerCount > -1 && (
                 <div>
-                  Followees: {presenter.followeeCount} Followers:{" "}
-                  {presenter.followerCount}
+                  Followees: {followeeCount} Followers: {followerCount}
                 </div>
               )}
             </div>
             <form>
               {displayedUser !== currentUser && (
                 <div className="form-group">
-                  {presenter.isFollower ? (
+                  {isFollower ? (
                     <button
                       id="unFollowButton"
                       className="btn btn-md btn-secondary me-1"
@@ -130,7 +153,7 @@ const UserInfo = (props: Props) => {
                           aria-hidden="true"
                         ></span>
                       ) : (
-                        <div>Follow</div>
+                        <div>Follow </div>
                       )}
                     </button>
                   )}

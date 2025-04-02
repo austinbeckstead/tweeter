@@ -84,7 +84,6 @@ export class UserService {
     const request: GetUserRequest = {
       //token: authToken.token,
       token: "auth",
-
       alias: user.alias,
     };
     return this.serverFacade.getFolloweeCount(request);
@@ -111,7 +110,7 @@ export class UserService {
     // Pause so we can see the follow message. Remove when connected to the server
     const request: GetUserRequest = {
       //token: authToken.token,
-      token: "auth",
+      token: authToken.token,
 
       alias: userToFollow.alias,
     };
@@ -125,7 +124,7 @@ export class UserService {
     // Pause so we can see the unfollow message. Remove when connected to the server
     const request: GetUserRequest = {
       //token: authToken.token,
-      token: "auth",
+      token: authToken.token,
       alias: userToFollow.alias,
     };
     // TODO: Call the server
@@ -135,8 +134,6 @@ export class UserService {
     const request: LogoutUserRequest = {
       token: authToken.token,
     };
-    console.log("HEREHREHRHEHRE");
-    console.log(authToken.token);
     return this.serverFacade.logoutUser(request);
   }
 }

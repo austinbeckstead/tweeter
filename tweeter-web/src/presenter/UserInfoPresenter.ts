@@ -15,7 +15,7 @@ export class UserInfoPresenter extends Presenter<UserInfoView> {
     super(view);
   }
   public async setIsFollowerStatus(currentUser: User, displayedUser: User) {
-    this.doFailureReportingOperation(async () => {
+    await this.doFailureReportingOperation(async () => {
       if (currentUser === displayedUser) {
         this._isFollower = false;
       } else {
@@ -25,6 +25,8 @@ export class UserInfoPresenter extends Presenter<UserInfoView> {
           displayedUser!
         );
       }
+      console.log("IS FOLLOWER PRESENTER:");
+      console.log(this._isFollower);
     }, "determine follwer status");
   }
   public async setNumbFollowees(displayedUser: User) {

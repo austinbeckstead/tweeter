@@ -115,7 +115,9 @@ export class ServerFacade {
       LoginUserRequest,
       UserResponse
     >(request, `/user/login`);
-    const authToken = AuthToken.fromJson(JSON.stringify(response.token));
+    const authToken = response.token
+      ? AuthToken.fromJson(JSON.stringify(response.token))
+      : null;
     return [User.fromDto(response.user)!, authToken, response.message];
   }
   public async registerUser(
@@ -125,7 +127,9 @@ export class ServerFacade {
       RegisterUserRequest,
       UserResponse
     >(request, `/user/register`);
-    const authToken = AuthToken.fromJson(JSON.stringify(response.token));
+    const authToken = response.token
+      ? AuthToken.fromJson(JSON.stringify(response.token))
+      : null;
     return [User.fromDto(response.user), authToken, response.message];
   }
   public async getUser(request: GetUserRequest): Promise<User | null> {

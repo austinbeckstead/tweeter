@@ -115,7 +115,7 @@ export class DynamoFollowsDAO implements FollowsDao {
   async getPageOfFollowees(
     follower_handle: string,
     lastItem: string | undefined = undefined,
-    limit: number = 2
+    limit: number = 10
   ): Promise<DataPage<Follows>> {
     const params = {
       KeyConditionExpression: this.follower_handle + " = :v",
@@ -146,7 +146,7 @@ export class DynamoFollowsDAO implements FollowsDao {
   async getPageOfFollowers(
     followee_handle: string,
     lastItem: string | undefined = undefined,
-    limit: number = 2
+    limit: number = 10
   ): Promise<DataPage<Follows>> {
     const params = {
       KeyConditionExpression: this.followee_handle + " = :loc",

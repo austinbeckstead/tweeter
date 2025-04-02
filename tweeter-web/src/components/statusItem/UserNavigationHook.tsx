@@ -25,8 +25,9 @@ const useUserNavigation = (
 
   const navigateToUser = async (event: React.MouseEvent): Promise<void> => {
     event.preventDefault();
-    const alias = extractAlias(event.target.toString());
-    presenter.navigateToUser(alias, currentUser, authToken);
+    //const alias = extractAlias(event.target.toString());
+    const alias = event.currentTarget.textContent;
+    presenter.navigateToUser(alias!, currentUser, authToken);
   };
   return navigateToUser;
 };

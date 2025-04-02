@@ -6,12 +6,11 @@ import { UserDao } from "../../dao/UserDao";
 import { Auth } from "../../entity/Auth";
 import { Follows } from "../../entity/Follows";
 import { UserEntity } from "../../entity/UserEntity";
-import { randomBytes } from "crypto";
-
-//For User table:
+import bcrypt from "bcryptjs";
+//For User table: DONE besides images
 // Partition Key: Alias      Sort Key: None
 
-//For AuthToken table:
+//For AuthToken table: DONE
 // Partition Key: AuthToken  Sort Key: None
 
 //For Feed table:
@@ -49,9 +48,9 @@ export class UserService {
       throw new Error("Invalid alias or password");
     }
     //validate password
-
-    const correctPassword = userEntity!.password;
-    if (password != correctPassword) {
+    const hash = userEntity.password;
+    const isMatch = bcrypt.compareSync(password, hash);
+    if (!isMatch) {
       throw new Error("Invalid alias or password");
     }
     const user = new User(
@@ -73,12 +72,16 @@ export class UserService {
     userImageBytes: string,
     imageFileExtension: string
   ): Promise<[UserDto, AuthToken]> {
-    const takenUser = await this.userDao.getUser(alias);
+    //Hash the password
+    const salt = bcrypt.genSaltSync(10);
+    const hash = bcrypt.hashSync(password, salt);
+
     //Make sure alias isn't taken
+    const takenUser = await this.userDao.getUser(alias);
     if (takenUser != undefined) {
       throw new Error("Alias Taken");
     }
-    const userEntity = new UserEntity(firstName, lastName, alias, password);
+    const userEntity = new UserEntity(firstName, lastName, alias, hash);
     //add User to database
     await this.userDao.addUser(userEntity);
     const user = new User(firstName, lastName, alias, "");
@@ -114,9 +117,10 @@ export class UserService {
     selectedUserAlias: string
   ): Promise<boolean> {
     // TODO: Replace with the result of calling server
+    const alias = await this.authDao.getAliasFromAuth(token);
     let followsQuery: Follows | undefined = new Follows(
       //userAlias,
-      "EDITED ALIAS",
+      alias!,
       selectedUserAlias
     );
     const follows = await this.followsDao.getFollows(followsQuery);
@@ -142,8 +146,6 @@ export class UserService {
     token: string,
     selectedAlias: string
   ): Promise<[followerCount: number, followeeCount: number]> {
-    // Pause so we can see the follow message. Remove when connected to the server
-    //need to implement getting user alias from authToken
     const userAlias = await this.authDao.getAliasFromAuth(token);
     const follows = new Follows(userAlias!, selectedAlias);
     await this.followsDao.addFollows(follows);
@@ -155,7 +157,6 @@ export class UserService {
     token: string,
     selectedAlias: string
   ): Promise<[followerCount: number, followeeCount: number]> {
-    // Pause so we can see the unfollow message. Remove when connected to the server
     const userAlias = await this.authDao.getAliasFromAuth(token);
     const follows = new Follows(userAlias!, selectedAlias);
     await this.followsDao.deleteFollows(follows);
