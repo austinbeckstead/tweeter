@@ -5,12 +5,13 @@ import {
   UserResponse,
 } from "tweeter-shared";
 import { UserService } from "../../model/service/UserService";
+const userService = new UserService();
 
 export const handler = async (
   request: RegisterUserRequest
 ): Promise<UserResponse> => {
-  const userService = new UserService();
-  let message = undefined;
+  let success = true;
+  let errorMessage = undefined;
   let user: UserDto | null = null;
   let token: AuthToken | null = null;
   try {
@@ -23,16 +24,15 @@ export const handler = async (
       request.imageFileExtension
     );
   } catch (error) {
-    if (error instanceof Error) {
-      message = error.message;
-    } else {
-      message = "An unknkown error occured";
-    }
+    success = false;
+    if (error instanceof Error) errorMessage = error.message;
+    else errorMessage = "An unknkown error occured";
+  } finally {
+    return {
+      success: success,
+      message: errorMessage,
+      user: user,
+      token: token,
+    };
   }
-  return {
-    success: true,
-    message: message,
-    user: user,
-    token: token,
-  };
 };

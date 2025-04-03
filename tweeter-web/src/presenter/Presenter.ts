@@ -14,18 +14,19 @@ export class Presenter<V extends View> {
   protected get view(): V {
     return this._view;
   }
-  public async doFailureReportingOperation(
-    operation: () => Promise<void>,
+  public async doFailureReportingOperation<T = void>(
+    operation: () => Promise<T>,
     operationDescription: string
-  ): Promise<void> {
+  ): Promise<T> {
     try {
-      await operation();
+      return await operation();
     } catch (error) {
       this.view.displayErrorMessage(
         `Failed to ${operationDescription} because of exception: ${
           (error as Error).message
         }`
       );
+      throw error;
     }
   }
 }

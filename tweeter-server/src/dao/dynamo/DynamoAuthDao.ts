@@ -13,6 +13,7 @@ export class DynamoAuthDAO implements AuthDao {
   readonly tableName = "auth";
   readonly auth_token = "auth_token";
   readonly alias = "alias";
+  readonly timestamp = "timestamp";
   private readonly client = DynamoDBDocumentClient.from(new DynamoDBClient());
   /**
    * Increment the number of times visitor has visited location
@@ -29,6 +30,7 @@ export class DynamoAuthDAO implements AuthDao {
       Item: {
         [this.auth_token]: auth.auth_token,
         [this.alias]: auth.alias,
+        [this.timestamp]: auth.timestamp,
       },
     };
     await this.client.send(new PutCommand(params));
@@ -42,9 +44,15 @@ export class DynamoAuthDAO implements AuthDao {
       },
     };
     const output = await this.client.send(new GetCommand(params));
-    return output.Item == undefined
+    return output.Item == undefined ||
+      output.Item[this.timestamp] == undefined ||
+      Math.floor(Date.now() / 1000) > output.Item[this.timestamp]
       ? undefined
-      : new Auth(output.Item[this.auth_token], output.Item[this.alias]);
+      : new Auth(
+          output.Item[this.auth_token],
+          output.Item[this.alias],
+          output.Item[this.timestamp]
+        );
   }
 
   /**

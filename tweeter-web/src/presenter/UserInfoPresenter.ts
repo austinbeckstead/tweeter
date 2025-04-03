@@ -14,7 +14,10 @@ export class UserInfoPresenter extends Presenter<UserInfoView> {
   public constructor(view: UserInfoView) {
     super(view);
   }
-  public async setIsFollowerStatus(currentUser: User, displayedUser: User) {
+  public async setIsFollowerStatus(
+    currentUser: User,
+    displayedUser: User
+  ): Promise<boolean> {
     await this.doFailureReportingOperation(async () => {
       if (currentUser === displayedUser) {
         this._isFollower = false;
@@ -25,63 +28,65 @@ export class UserInfoPresenter extends Presenter<UserInfoView> {
           displayedUser!
         );
       }
-      console.log("IS FOLLOWER PRESENTER:");
-      console.log(this._isFollower);
     }, "determine follwer status");
+    return this._isFollower;
   }
-  public async setNumbFollowees(displayedUser: User) {
-    this.doFailureReportingOperation(async () => {
+  public async setNumbFollowees(displayedUser: User): Promise<number> {
+    return this.doFailureReportingOperation(async () => {
       this._followeeCount = await this.userService.getFolloweeCount(
         this.view.authToken!,
         displayedUser
       );
+      return this._followeeCount;
     }, "get followees count");
   }
-  public async setNumbFollowers(displayedUser: User) {
-    this.doFailureReportingOperation(async () => {
+  public async setNumbFollowers(displayedUser: User): Promise<number> {
+    return this.doFailureReportingOperation(async () => {
       this._followerCount = await this.userService.getFollowerCount(
         this.view.authToken!,
         displayedUser
       );
+      return this._followerCount;
     }, "get followers count");
   }
 
-  public async followDisplayedUser(displayedUser: User | null): Promise<void> {
-    this.doFailureReportingOperation(async () => {
-      this._isLoading = true;
-      this.view.displayInfoMessage(`Following ${displayedUser!.name}...`, 0);
-
-      const [followerCount, followeeCount] = await this.userService.follow(
-        this.view.authToken!,
-        displayedUser!
-      );
-
-      this._isFollower = true;
-      this._followerCount = followerCount;
-      this._followeeCount = followeeCount;
-    }, "follow user");
-    this.view.clearLastInfoMessage();
-    this._isLoading = false;
+  public async followDisplayedUser(
+    displayedUser: User | null
+  ): Promise<[boolean, number, number]> {
+    try {
+      return await this.doFailureReportingOperation(async () => {
+        this._isLoading = true;
+        this.view.displayInfoMessage(`Following ${displayedUser!.name}...`, 0);
+        this._isFollower = true;
+        [this._followerCount, this._followeeCount] =
+          await this.userService.follow(this.view.authToken!, displayedUser!);
+        return [this._isFollower, this._followeeCount, this._followerCount];
+      }, "follow user");
+    } finally {
+      this._isLoading = false;
+      this.view.clearLastInfoMessage();
+    }
   }
 
   public async unfollowDisplayedUser(
     displayedUser: User | null
-  ): Promise<void> {
-    this.doFailureReportingOperation(async () => {
-      this._isLoading = true;
-      this.view.displayInfoMessage(`Unfollowing ${displayedUser!.name}...`, 0);
-
-      const [followerCount, followeeCount] = await this.userService.unfollow(
-        this.view.authToken!,
-        displayedUser!
-      );
-
-      this._isFollower = false;
-      this._followerCount = followerCount;
-      this._followeeCount = followeeCount;
-    }, "unfollow user");
-    this.view.clearLastInfoMessage();
-    this._isLoading = false;
+  ): Promise<[boolean, number, number]> {
+    try {
+      return this.doFailureReportingOperation(async () => {
+        this._isLoading = true;
+        this.view.displayInfoMessage(
+          `Unfollowing ${displayedUser!.name}...`,
+          0
+        );
+        this._isFollower = false;
+        [this._followerCount, this._followeeCount] =
+          await this.userService.unfollow(this.view.authToken!, displayedUser!);
+        return [this._isFollower, this._followeeCount, this._followerCount];
+      }, "unfollow user");
+    } finally {
+      this.view.clearLastInfoMessage();
+      this._isLoading = false;
+    }
   }
   public get isLoading() {
     return this._isLoading;

@@ -53,16 +53,11 @@ export class ServerFacade {
       response.success && response.items
         ? response.items.map((dto) => User.fromDto(dto) as User)
         : null;
-    // Handle errors
-    if (response.success) {
-      if (items == null) {
-        throw new Error(`No ${type}s found`);
-      } else {
-        return [items, response.hasMore];
-      }
+    handleError(response);
+    if (items == null) {
+      throw new Error(`No ${type}s found`);
     } else {
-      console.error(response);
-      throw new Error(response.message);
+      return [items, response.hasMore];
     }
   }
   public async getMoreStatusItems(
@@ -79,15 +74,11 @@ export class ServerFacade {
         ? response.items.map((dto) => Status.fromDto(dto) as Status)
         : null;
     // Handle errors
-    if (response.success) {
-      if (items == null) {
-        throw new Error(`No ${type} found`);
-      } else {
-        return [items, response.hasMore];
-      }
+    handleError(response);
+    if (items == null) {
+      throw new Error(`No ${type} found`);
     } else {
-      console.error(response);
-      throw new Error(response.message);
+      return [items, response.hasMore];
     }
   }
   public async getMoreStoryItems(
@@ -103,41 +94,49 @@ export class ServerFacade {
     return response;
   }
   public async postStatus(request: PostStatusRequest): Promise<void> {
-    await this.clientCommunicator.doPost<PostStatusRequest, TweeterResponse>(
-      request,
-      `/status/post`
-    );
+    const response = await this.clientCommunicator.doPost<
+      PostStatusRequest,
+      TweeterResponse
+    >(request, `/status/post`);
+    handleError(response);
   }
   public async loginUser(
     request: LoginUserRequest
-  ): Promise<[User | null, AuthToken | null, string | undefined]> {
+  ): Promise<[User, AuthToken]> {
     const response = await this.clientCommunicator.doPost<
       LoginUserRequest,
       UserResponse
     >(request, `/user/login`);
-    const authToken = response.token
-      ? AuthToken.fromJson(JSON.stringify(response.token))
-      : null;
-    return [User.fromDto(response.user)!, authToken, response.message];
+    handleError(response);
+    if (!response.user || !response.token)
+      throw new Error("An Unknown Error Occured");
+    const authToken = AuthToken.fromJson(JSON.stringify(response.token));
+    const user = User.fromDto(response.user);
+
+    return [user!, authToken!];
   }
   public async registerUser(
     request: RegisterUserRequest
-  ): Promise<[User | null, AuthToken | null, string | undefined]> {
+  ): Promise<[User, AuthToken]> {
     const response = await this.clientCommunicator.doPost<
       RegisterUserRequest,
       UserResponse
     >(request, `/user/register`);
-    const authToken = response.token
-      ? AuthToken.fromJson(JSON.stringify(response.token))
-      : null;
-    return [User.fromDto(response.user), authToken, response.message];
+    handleError(response);
+    if (!response.user || !response.token)
+      throw new Error("An Unknown Error Occured");
+    const authToken = AuthToken.fromJson(JSON.stringify(response.token));
+    const user = User.fromDto(response.user);
+    return [user!, authToken!];
   }
-  public async getUser(request: GetUserRequest): Promise<User | null> {
+  public async getUser(request: GetUserRequest): Promise<User> {
     const response = await this.clientCommunicator.doPost<
       GetUserRequest,
       GetUserResponse
     >(request, `/user/get`);
-    return response.user ? User.fromDto(response.user) : null;
+    handleError(response);
+    if (response.user == null) throw new Error("An Unknown Error Occured");
+    return User.fromDto(response.user)!;
   }
   public async getIsFollower(
     request: GetIsFollowerStatusRequest
@@ -146,6 +145,7 @@ export class ServerFacade {
       GetIsFollowerStatusRequest,
       GetIsFollowerStatusResponse
     >(request, `/user/getIsFollower`);
+    handleError(response);
     return response.isFollower;
   }
   public async getFolloweeCount(request: GetUserRequest): Promise<number> {
@@ -153,6 +153,7 @@ export class ServerFacade {
       GetUserRequest,
       GetFollowsResponse
     >(request, `/user/getFolloweeCount`);
+    handleError(response);
     return response.followsCount;
   }
   public async getFollowerCount(request: GetUserRequest): Promise<number> {
@@ -160,6 +161,7 @@ export class ServerFacade {
       GetUserRequest,
       GetFollowsResponse
     >(request, `/user/getFollowerCount`);
+    handleError(response);
     return response.followsCount;
   }
   public async followUser(request: GetUserRequest): Promise<[number, number]> {
@@ -167,6 +169,7 @@ export class ServerFacade {
       GetUserRequest,
       FollowUserResponse
     >(request, `/user/follow`);
+    handleError(response);
     return [response.followerCount, response.followeeCount];
   }
   public async unfollowUser(
@@ -176,12 +179,20 @@ export class ServerFacade {
       GetUserRequest,
       FollowUserResponse
     >(request, `/user/unfollow`);
+    handleError(response);
     return [response.followerCount, response.followeeCount];
   }
   public async logoutUser(request: LogoutUserRequest): Promise<void> {
-    await this.clientCommunicator.doPost<LogoutUserRequest, TweeterResponse>(
-      request,
-      `/user/logout`
-    );
+    const response = await this.clientCommunicator.doPost<
+      LogoutUserRequest,
+      TweeterResponse
+    >(request, `/user/logout`);
+    handleError(response);
+  }
+}
+function handleError(response: TweeterResponse): void {
+  if (response.success == false) {
+    console.error(response);
+    throw new Error(response.message);
   }
 }

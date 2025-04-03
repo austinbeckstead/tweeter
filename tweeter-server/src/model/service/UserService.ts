@@ -7,6 +7,8 @@ import { Auth } from "../../entity/Auth";
 import { Follows } from "../../entity/Follows";
 import { UserEntity } from "../../entity/UserEntity";
 import bcrypt from "bcryptjs";
+import { ImageDao } from "../../dao/ImageDao";
+
 //For User table: DONE besides images
 // Partition Key: Alias      Sort Key: None
 
@@ -32,10 +34,13 @@ export class UserService {
   followsDao: FollowsDao;
   authDao: AuthDao;
   userDao: UserDao;
+  imageDao: ImageDao;
+  readonly timeToExpire = 6000;
   public constructor() {
     this.followsDao = this.factory.getFollowsDAO();
     this.authDao = this.factory.getAuthDAO();
     this.userDao = this.factory.getUserDAO();
+    this.imageDao = this.factory.getImageDAO();
   }
   public async login(
     alias: string,
@@ -57,7 +62,7 @@ export class UserService {
       userEntity.first_name,
       userEntity.last_name,
       userEntity.alias,
-      ""
+      userEntity.image_url
     );
     //generate auth
     const authToken = await this.generateAuth(alias);
@@ -81,10 +86,23 @@ export class UserService {
     if (takenUser != undefined) {
       throw new Error("Alias Taken");
     }
-    const userEntity = new UserEntity(firstName, lastName, alias, hash);
+    const imageName = `${alias}.${imageFileExtension}`;
+    let imageUrl = "";
+    try {
+      imageUrl = await this.imageDao.putImage(imageName, userImageBytes);
+    } catch (error) {
+      throw new Error("Error uploading image");
+    }
+    const userEntity = new UserEntity(
+      firstName,
+      lastName,
+      alias,
+      hash,
+      imageUrl
+    );
     //add User to database
     await this.userDao.addUser(userEntity);
-    const user = new User(firstName, lastName, alias, "");
+    const user = new User(firstName, lastName, alias, imageUrl);
     //generate Auth
     const authToken = await this.generateAuth(alias);
     return [user.dto, authToken];
@@ -93,7 +111,7 @@ export class UserService {
     // TODO: Replace with the result of calling server
     const authToken = await this.authDao.getAuth(token);
     if (authToken == undefined) {
-      throw new Error("Not Authenticated");
+      throw new Error("User Not Authenticated");
     }
     const userEntity = await this.userDao.getUser(alias);
     const user = userEntity
@@ -101,14 +119,15 @@ export class UserService {
           userEntity.first_name,
           userEntity.last_name,
           userEntity.alias,
-          ""
+          userEntity.image_url
         )
       : null;
     return user ? user.dto : null;
   }
   private async generateAuth(alias: string): Promise<AuthToken> {
     const token = AuthToken.Generate();
-    await this.authDao.addAuth(new Auth(token.token, alias));
+    const timestamp = Math.floor(Date.now() / 1000) + this.timeToExpire;
+    await this.authDao.addAuth(new Auth(token.token, alias, timestamp));
     return token;
   }
   public async getIsFollower(
@@ -117,10 +136,11 @@ export class UserService {
     selectedUserAlias: string
   ): Promise<boolean> {
     // TODO: Replace with the result of calling server
-    const alias = await this.authDao.getAliasFromAuth(token);
+    if ((await this.authDao.getAuth(token)) == undefined) {
+      throw new Error("User Not Authenticated");
+    }
     let followsQuery: Follows | undefined = new Follows(
-      //userAlias,
-      alias!,
+      userAlias,
       selectedUserAlias
     );
     const follows = await this.followsDao.getFollows(followsQuery);
@@ -131,6 +151,9 @@ export class UserService {
     userAlias: string
   ): Promise<number> {
     // TODO: Replace with the result of calling server
+    if ((await this.authDao.getAuth(token)) == undefined) {
+      throw new Error("User Not Authenticated");
+    }
     return this.followsDao.getNumFollowees(token, userAlias);
   }
 
@@ -139,6 +162,9 @@ export class UserService {
     userAlias: string
   ): Promise<number> {
     // TODO: Replace with the result of calling server
+    if ((await this.authDao.getAuth(token)) == undefined) {
+      throw new Error("User Not Authenticated");
+    }
     return this.followsDao.getNumFollowers(token, userAlias);
   }
 
@@ -146,6 +172,9 @@ export class UserService {
     token: string,
     selectedAlias: string
   ): Promise<[followerCount: number, followeeCount: number]> {
+    if ((await this.authDao.getAuth(token)) == undefined) {
+      throw new Error("User Not Authenticated");
+    }
     const userAlias = await this.authDao.getAliasFromAuth(token);
     const follows = new Follows(userAlias!, selectedAlias);
     await this.followsDao.addFollows(follows);
@@ -157,6 +186,9 @@ export class UserService {
     token: string,
     selectedAlias: string
   ): Promise<[followerCount: number, followeeCount: number]> {
+    if ((await this.authDao.getAuth(token)) == undefined) {
+      throw new Error("User Not Authenticated");
+    }
     const userAlias = await this.authDao.getAliasFromAuth(token);
     const follows = new Follows(userAlias!, selectedAlias);
     await this.followsDao.deleteFollows(follows);
@@ -168,6 +200,9 @@ export class UserService {
     return [followerCount, followeeCount];
   }
   public async logout(token: string): Promise<void> {
+    if ((await this.authDao.getAuth(token)) == undefined) {
+      throw new Error("User Not Authenticated");
+    }
     await this.authDao.deleteAuth(token);
   }
 }

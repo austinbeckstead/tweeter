@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import InfiniteScroll from "react-infinite-scroll-component";
 import useToastListener from "../toaster/ToastListenerHook";
 import useUserInfo from "../userInfo/UserInfoHook";
@@ -19,21 +19,25 @@ const ItemScroller = <T, U>(props: Props<T, U>) => {
   const [items, setItems] = useState<T[]>([]);
   const [newItems, setNewItems] = useState<T[]>([]);
 
-  const [changedDisplayedUser, setChangedDisplayedUser] = useState(true);
+  //const [changedDisplayedUser, setChangedDisplayedUser] = useState(true);
 
   const { displayedUser, authToken } = useUserInfo();
+  const prevUser = useRef<User | null>(null);
   // Initialize the component whenever the displayed user changes
   useEffect(() => {
-    reset();
+    if (displayedUser !== prevUser.current) {
+      prevUser.current = displayedUser;
+      reset();
+    }
   }, [displayedUser]);
 
   // Load initial items whenever the displayed user changes. Done in a separate useEffect hook so the changes from reset will be visible.
-  useEffect(() => {
+  /*useEffect(() => {
     if (changedDisplayedUser) {
       console.log("TRIGGERED BECAUSE OF CHANGE USER");
       loadMoreItems();
     }
-  }, [changedDisplayedUser]);
+  }, [changedDisplayedUser]);*/
 
   // Add new items whenever there are new items to add
   useEffect(() => {
@@ -46,8 +50,9 @@ const ItemScroller = <T, U>(props: Props<T, U>) => {
     console.log("RESET");
     setItems([]);
     setNewItems([]);
-    setChangedDisplayedUser(true);
     presenter.reset();
+    await loadMoreItems();
+    //setChangedDisplayedUser(true);
   };
 
   const listener: PagedItemView<T> = {
@@ -59,7 +64,7 @@ const ItemScroller = <T, U>(props: Props<T, U>) => {
   const loadMoreItems = async () => {
     console.log("LOADING MORE ITEMS");
     await presenter.loadMoreItems(authToken!, displayedUser!);
-    setChangedDisplayedUser(false);
+    //setChangedDisplayedUser(false);
   };
 
   return (
