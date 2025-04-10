@@ -63,8 +63,8 @@ export class UserInfoPresenter extends Presenter<UserInfoView> {
         return [this._isFollower, this._followeeCount, this._followerCount];
       }, "follow user");
     } finally {
-      this._isLoading = false;
       this.view.clearLastInfoMessage();
+      this._isLoading = false;
     }
   }
 
@@ -72,7 +72,7 @@ export class UserInfoPresenter extends Presenter<UserInfoView> {
     displayedUser: User | null
   ): Promise<[boolean, number, number]> {
     try {
-      return this.doFailureReportingOperation(async () => {
+      return await this.doFailureReportingOperation(async () => {
         this._isLoading = true;
         this.view.displayInfoMessage(
           `Unfollowing ${displayedUser!.name}...`,

@@ -115,7 +115,7 @@ export class UserService {
       alias: userToFollow.alias,
     };
     // TODO: Call the server
-    return this.serverFacade.followUser(request);
+    return await this.serverFacade.followUser(request);
   }
   public async unfollow(
     authToken: AuthToken,
@@ -128,7 +128,7 @@ export class UserService {
       alias: userToFollow.alias,
     };
     // TODO: Call the server
-    return this.serverFacade.unfollowUser(request);
+    return await this.serverFacade.unfollowUser(request);
   }
   public async logout(authToken: AuthToken): Promise<void> {
     const request: LogoutUserRequest = {

@@ -50,12 +50,16 @@ export abstract class UserPresenter extends Presenter<UserView> {
     getMessageString: () => string,
     navigate: () => void
   ) {
-    this.doFailureReportingOperation(async () => {
-      this.isLoading = true;
-      const [user, authToken] = await authenticate(alias, password);
-      this.view.updateUserInfo(user, user, authToken, this.rememberMe);
-      collapseTextChangeRangesAcrossMultipleVersions;
-      navigate();
+    await this.doFailureReportingOperation(async () => {
+      try {
+        this.isLoading = true;
+        const [user, authToken] = await authenticate(alias, password);
+        this.view.updateUserInfo(user, user, authToken, this.rememberMe);
+        collapseTextChangeRangesAcrossMultipleVersions;
+        navigate();
+      } finally {
+        this.isLoading = false;
+      }
     }, getMessageString());
   }
 

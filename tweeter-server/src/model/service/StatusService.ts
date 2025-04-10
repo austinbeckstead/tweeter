@@ -1,15 +1,26 @@
-import { Status, FakeData, StatusDto, User, UserDto } from "tweeter-shared";
+import { Status, FakeData, StatusDto, User } from "tweeter-shared";
 import { AuthDao } from "../../dao/AuthDao";
 import { DynamoFactory } from "../../dao/dynamo/DynamoFactory";
 import { FeedDao } from "../../dao/FeedDao";
 import { FollowsDao } from "../../dao/FollowsDao";
 import { StoryDao } from "../../dao/StoryDao";
 import { UserDao } from "../../dao/UserDao";
-import { Feed } from "../../entity/Feed";
 import { Story } from "../../entity/Story";
 import { UserEntity } from "../../entity/UserEntity";
-
+import { Feed } from "../../entity/Feed";
+import {
+  SQSClient,
+  SendMessageCommand,
+  SendMessageBatchCommand,
+} from "@aws-sdk/client-sqs";
+import { DataPage } from "../../entity/DataPage";
+import { Follows } from "../../entity/Follows";
+const SQS_POSTSTATUS =
+  "https://sqs.us-west-2.amazonaws.com/905418392054/TweeterPostStatus";
+const SQS_UPDATEFEED =
+  "https://sqs.us-west-2.amazonaws.com/905418392054/TweeterUpdateFeed";
 export class StatusService {
+  sqsClient = new SQSClient();
   factory = new DynamoFactory();
   storyDao: StoryDao;
   authDao: AuthDao;
@@ -92,16 +103,64 @@ export class StatusService {
 
     return [feedDtos, dataPage.hasMorePages];
   }
-  public async postStatus(token: string, newStatus: StatusDto): Promise<void> {
-    // Pause so we can see the logging out message. Remove when connected to the server
+  public async addStory(token: string, newStatus: StatusDto): Promise<void> {
     if ((await this.authDao.getAuth(token)) == undefined) {
       throw new Error("User Not Authenticated");
     }
     const senderAlias = newStatus.user.alias;
     const story = new Story(senderAlias, newStatus.timestamp, newStatus.post);
     await this.storyDao.addStory(story);
-    const allFollowers = await this.getFollowers(senderAlias);
-    for (const follower of allFollowers) {
+    const command = new SendMessageCommand({
+      QueueUrl: SQS_POSTSTATUS,
+      MessageBody: JSON.stringify(story),
+    });
+    try {
+      await this.sqsClient.send(command);
+    } catch {
+      throw new Error("Error sending followers");
+    }
+  }
+  public async postStatus(story: Story): Promise<void> {
+    // Pause so we can see the logging out message. Remove when connected to the server
+    console.log("ALIAILASSSSS: ", story.sender_alias);
+    let moreItems = true;
+    let lastItem = undefined;
+    //let allFollowers: string[] = [];
+    while (moreItems) {
+      const dataPage: DataPage<Follows> =
+        await this.followsDao.getPageOfFollowers(
+          story.sender_alias,
+          lastItem,
+          10
+        );
+      moreItems = dataPage.hasMorePages;
+      const followerPage = dataPage.values.map(
+        (value) => value.follower_handle
+      );
+      //allFollowers = [...allFollowers, ...followerPage];
+      //lastItem = allFollowers[allFollowers.length - 1];
+      const messages = followerPage.map((follower, index) => ({
+        Id: `msg-${index + Date.now()}`, // Unique ID for each message
+        MessageBody: JSON.stringify(
+          new Feed(follower, story.sender_alias, story.timestamp, story.post)
+        ),
+      }));
+      try {
+        const command = new SendMessageBatchCommand({
+          QueueUrl: SQS_UPDATEFEED,
+          Entries: messages,
+        });
+        await this.sqsClient.send(command);
+      } catch (error) {
+        console.error("Error sending batch to SQS:", error);
+        throw new Error("Error sending followers");
+      } finally {
+        lastItem = followerPage[followerPage.length - 1];
+      }
+    }
+
+    //await this.sqsClient.send(command);
+    /* for (const follower of allFollowers) {
       const feed = new Feed(
         follower,
         senderAlias,
@@ -109,25 +168,47 @@ export class StatusService {
         newStatus.post
       );
       await this.feedDao.addFeed(feed);
-    }
+      
+    }*/
   }
-  private async getFollowers(alias: string): Promise<string[]> {
+  public async addFeeds(feeds: Feed[]) {
+    await this.feedDao.addFeed(feeds);
+  }
+
+  /*private async writeFollowers(story: Story): Promise<void> {
     let moreItems = true;
     let lastItem = undefined;
-    let allFollowers: string[] = [];
+    //let allFollowers: string[] = [];
     while (moreItems) {
-      const dataPage = await this.followsDao.getPageOfFollowers(
-        alias,
-        lastItem,
-        2
-      );
+      const dataPage: DataPage<Follows> =
+        await this.followsDao.getPageOfFollowers(
+          story.sender_alias,
+          lastItem,
+          10
+        );
       moreItems = dataPage.hasMorePages;
       const followerPage = dataPage.values.map(
         (value) => value.follower_handle
       );
-      allFollowers = [...allFollowers, ...followerPage];
-      lastItem = allFollowers[allFollowers.length - 1];
+      //allFollowers = [...allFollowers, ...followerPage];
+      //lastItem = allFollowers[allFollowers.length - 1];
+      const messages = followerPage.map((follower, index) => ({
+        Id: `msg-${index + 1}`, // Unique ID for each message
+        MessageBody: JSON.stringify(
+          new Feed(follower, story.sender_alias, story.timestamp, story.post)
+        ), // Customize the message content as needed
+      }));
+      try {
+        const command = new SendMessageBatchCommand({
+          QueueUrl: SQS_URL, // Your SQS Queue URL
+          Entries: messages, // The batch of messages
+        });
+        await this.sqsClient.send(command);
+      } catch {
+        throw new Error("Error sending followers");
+      } finally {
+        lastItem = followerPage[followerPage.length - 1];
+      }
     }
-    return allFollowers;
-  }
+  }*/
 }

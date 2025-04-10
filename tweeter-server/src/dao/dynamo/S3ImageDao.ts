@@ -4,7 +4,6 @@ import {
   PutObjectCommand,
   ObjectCannedACL,
 } from "@aws-sdk/client-s3";
-import { Readable } from "stream";
 
 export class S3ImageDao implements ImageDao {
   private BUCKET = "tweeterimagebucketaustinbeckstead";
@@ -33,9 +32,5 @@ export class S3ImageDao implements ImageDao {
     } catch (error) {
       throw Error("s3 put image failed with: " + error);
     }
-  }
-
-  async getImage(fileName: string): Promise<string> {
-    return `https://${this.BUCKET}.s3.${this.REGION}.amazonaws.com/image/${fileName}`;
   }
 }

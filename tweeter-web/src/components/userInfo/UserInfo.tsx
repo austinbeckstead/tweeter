@@ -32,6 +32,7 @@ const UserInfo = (props: Props) => {
   useEffect(() => {
     setIsLoading(presenter.isLoading);
   }, [presenter.isLoading]);
+
   const [isFollower, setIsFollower] = useState(presenter.isFollower);
   const [followeeCount, setFolloweeCount] = useState(presenter.followeeCount);
   const [followerCount, setFollowerCount] = useState(presenter.followerCount);
@@ -48,7 +49,6 @@ const UserInfo = (props: Props) => {
       setIsFollower(isFollows);
       setFolloweeCount(followee);
       setFollowerCount(follower);
-      // Now that all async calls are complete, update the state
       setIsLoading(false);
     };
     fetchData();
@@ -59,8 +59,10 @@ const UserInfo = (props: Props) => {
   ): Promise<void> => {
     event.preventDefault();
     setDisplayedUser(currentUser!);
-    setFolloweeCount(await presenter.setNumbFollowees(displayedUser!));
-    setFollowerCount(await presenter.setNumbFollowers(displayedUser!));
+    const followee = await presenter.setNumbFollowees(currentUser!);
+    const follower = await presenter.setNumbFollowers(currentUser!);
+    setFolloweeCount(followee);
+    setFollowerCount(follower);
   };
 
   const followDisplayedUser = async (
@@ -69,8 +71,11 @@ const UserInfo = (props: Props) => {
     event.preventDefault();
     const [isFollow, followees, followers] =
       await presenter.followDisplayedUser(displayedUser);
+    const followee = await presenter.setNumbFollowees(displayedUser!);
+    const follower = await presenter.setNumbFollowers(displayedUser!);
     setIsFollower(isFollow);
-    setFolloweeCount(followees);
+    setFolloweeCount(followee);
+    setFollowerCount(follower);
   };
 
   const unfollowDisplayedUser = async (
@@ -80,6 +85,7 @@ const UserInfo = (props: Props) => {
     const [isFollow, followees, followers] =
       await presenter.unfollowDisplayedUser(displayedUser);
     setIsFollower(isFollow);
+    setFolloweeCount(followees);
     setFollowerCount(followers);
   };
 

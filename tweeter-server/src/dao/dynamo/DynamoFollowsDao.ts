@@ -19,7 +19,6 @@ export class DynamoFollowsDAO implements FollowsDao {
 
   private readonly client = DynamoDBDocumentClient.from(new DynamoDBClient());
   /**
-   * Increment the number of times visitor has visited location
    *
    * @param follows
    */
@@ -84,7 +83,7 @@ export class DynamoFollowsDAO implements FollowsDao {
     };
 
     const data = await this.client.send(new QueryCommand(params));
-    return data.Count!; // The number of matching items
+    return data.Count!;
   }
   async getNumFollowers(
     token: string,

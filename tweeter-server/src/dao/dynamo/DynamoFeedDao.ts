@@ -8,6 +8,7 @@ import { DataPage } from "../../entity/DataPage";
 import { Feed } from "../../entity/Feed";
 import { FeedDao } from "../FeedDao";
 import { StatusDto } from "tweeter-shared";
+import { BatchWriteCommand } from "@aws-sdk/lib-dynamodb";
 
 export class DynamoFeedDAO implements FeedDao {
   readonly tableName = "feed";
@@ -18,10 +19,44 @@ export class DynamoFeedDAO implements FeedDao {
   readonly timestamp = "timestamp";
   private readonly client = DynamoDBDocumentClient.from(new DynamoDBClient());
 
-  async addFeed(feed: Feed): Promise<void> {
+  async addFeed(feed: Feed[]): Promise<void> {
     await this.putFeed(feed);
   }
-  private async putFeed(feed: Feed): Promise<void> {
+  private async putFeed(feed: Feed[]): Promise<void> {
+    const BATCH_SIZE = 25;
+
+    for (let i = 0; i < feed.length; i += BATCH_SIZE) {
+      const batch = feed.slice(i, i + BATCH_SIZE);
+
+      const requestItems = batch.map((item) => {
+        const senderAlias = item.sender_alias;
+        const timestamp = item.timestamp;
+        const isodate = new Date(timestamp).toISOString();
+        const sortVal = isodate + senderAlias;
+
+        return {
+          PutRequest: {
+            Item: {
+              [this.receiver_alias]: item.receiver_alias,
+              [this.sort_val]: sortVal,
+              [this.sender_alias]: senderAlias,
+              [this.post]: item.post,
+              [this.timestamp]: timestamp,
+            },
+          },
+        };
+      });
+
+      const params = {
+        RequestItems: {
+          [this.tableName]: requestItems,
+        },
+      };
+
+      await this.client.send(new BatchWriteCommand(params));
+    }
+
+    /*
     const senderAlias = feed.sender_alias;
     const timestamp = feed.timestamp;
     const isodate = new Date(timestamp).toISOString();
@@ -36,7 +71,7 @@ export class DynamoFeedDAO implements FeedDao {
         [this.timestamp]: feed.timestamp,
       },
     };
-    await this.client.send(new PutCommand(params));
+    await this.client.send(new PutCommand(params));*/
   }
   async getPageOfFeed(
     receiver_alias: string,

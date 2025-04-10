@@ -62,7 +62,6 @@ const ItemScroller = <T, U>(props: Props<T, U>) => {
   const [presenter] = useState(props.presenterGenerator(listener));
 
   const loadMoreItems = async () => {
-    console.log("LOADING MORE ITEMS");
     await presenter.loadMoreItems(authToken!, displayedUser!);
     //setChangedDisplayedUser(false);
   };

@@ -1,8 +1,8 @@
 import { UserPresenter } from "./UserPresenter";
 
 export class LoginUserPresenter extends UserPresenter {
-  public loginUser(alias: string, password: string) {
-    this.authenticateUser(
+  public async loginUser(alias: string, password: string) {
+    await this.authenticateUser(
       alias,
       password,
       async (alias: string, password: string) => {
