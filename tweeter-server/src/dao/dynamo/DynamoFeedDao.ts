@@ -1,8 +1,4 @@
-import {
-  DynamoDBDocumentClient,
-  PutCommand,
-  QueryCommand,
-} from "@aws-sdk/lib-dynamodb";
+import { DynamoDBDocumentClient, QueryCommand } from "@aws-sdk/lib-dynamodb";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DataPage } from "../../entity/DataPage";
 import { Feed } from "../../entity/Feed";
@@ -23,7 +19,7 @@ export class DynamoFeedDAO implements FeedDao {
     await this.putFeed(feed);
   }
   private async putFeed(feed: Feed[]): Promise<void> {
-    const BATCH_SIZE = 25;
+    const BATCH_SIZE = 10;
 
     for (let i = 0; i < feed.length; i += BATCH_SIZE) {
       const batch = feed.slice(i, i + BATCH_SIZE);

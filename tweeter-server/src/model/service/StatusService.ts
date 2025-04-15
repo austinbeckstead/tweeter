@@ -121,12 +121,63 @@ export class StatusService {
     }
   }
   public async postStatus(story: Story): Promise<void> {
+    let moreItems = true;
+    let lastFollowerHandle = undefined;
+    let i = 0;
+    let messageId = 0;
+    while (moreItems) {
+      console.log("CURRENT ITEMS: ", i);
+
+      const dataPage: DataPage<Follows> =
+        await this.followsDao.getPageOfFollowers(
+          story.sender_alias,
+          lastFollowerHandle,
+          10
+        );
+
+      moreItems = dataPage.hasMorePages;
+      if (moreItems == false) {
+        console.log("IT RETUREND NO MORE ITEMS");
+      }
+      const items = dataPage.values;
+      const followerPage = items.map((item) => item.follower_handle);
+      i += followerPage.length; // Increment by actual number of items processed
+
+      if (followerPage.length === 0) {
+        break;
+      }
+
+      const messages = followerPage.map((follower) => ({
+        Id: `msg_${messageId++}`,
+        MessageBody: JSON.stringify(
+          new Feed(follower, story.sender_alias, story.timestamp, story.post)
+        ),
+      }));
+
+      try {
+        const command = new SendMessageBatchCommand({
+          QueueUrl: SQS_UPDATEFEED,
+          Entries: messages,
+        });
+        await this.sqsClient.send(command);
+      } catch (error) {
+        console.error("Error sending batch to SQS:", error);
+        throw new Error("Error sending followers");
+      }
+
+      // Update lastFollowerHandle with the actual last item from this page
+      lastFollowerHandle =
+        dataPage.values[dataPage.values.length - 1]?.follower_handle;
+    }
+  }
+  /*public async postStatus(story: Story): Promise<void> {
     // Pause so we can see the logging out message. Remove when connected to the server
-    console.log("ALIAILASSSSS: ", story.sender_alias);
     let moreItems = true;
     let lastItem = undefined;
-    //let allFollowers: string[] = [];
+    let i = 0;
     while (moreItems) {
+      console.log("CURRENT ITEMS: ", i);
+      i += 10;
       const dataPage: DataPage<Follows> =
         await this.followsDao.getPageOfFollowers(
           story.sender_alias,
@@ -137,10 +188,8 @@ export class StatusService {
       const followerPage = dataPage.values.map(
         (value) => value.follower_handle
       );
-      //allFollowers = [...allFollowers, ...followerPage];
-      //lastItem = allFollowers[allFollowers.length - 1];
       const messages = followerPage.map((follower, index) => ({
-        Id: `msg-${index + Date.now()}`, // Unique ID for each message
+        Id: `msg_${index}`,
         MessageBody: JSON.stringify(
           new Feed(follower, story.sender_alias, story.timestamp, story.post)
         ),
@@ -158,19 +207,8 @@ export class StatusService {
         lastItem = followerPage[followerPage.length - 1];
       }
     }
-
-    //await this.sqsClient.send(command);
-    /* for (const follower of allFollowers) {
-      const feed = new Feed(
-        follower,
-        senderAlias,
-        newStatus.timestamp,
-        newStatus.post
-      );
-      await this.feedDao.addFeed(feed);
-      
-    }*/
   }
+  */
   public async addFeeds(feeds: Feed[]) {
     await this.feedDao.addFeed(feeds);
   }
